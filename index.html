@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1119">
+<title>SimuLADI — Pedido de fala</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/config.js"></script>
+<script src="assets/js/ui.js"></script>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="wrap">
+  <div class="col">
+
+    <div class="spacer"></div>
+
+    <header class="brand">
+      <span class="brand__mark">
+        <img src="assets/img/logo.png" alt="" onerror="this.onerror=null;UI.logoFallback(this)">
+      </span>
+      <div>
+        <h1 class="brand__name">SimuLADI<sup>®</sup></h1>
+      </div>
+    </header>
+
+    <p class="lede">
+      Bem-vindo ao site oficial da Simulação da ONU organizada pelas
+      <b>Ligas Acadêmicas de Direito Internacional da UFF e da UNIRIO</b>!
+    </p>
+
+    <form id="formEntrada" novalidate>
+      <div class="field">
+        <button type="button" class="pill" id="btnDelegacao" aria-expanded="false" aria-haspopup="dialog">
+          <span class="flag" id="dlgFlag" hidden></span>
+          <span class="pill__grow pill__ph" id="dlgTexto">Selecione sua delegação</span>
+          <span class="pill__caret"></span>
+        </button>
+      </div>
+
+      <div class="field inputwrap">
+        <input class="pill pill--input" type="password" id="senha" placeholder="Informe sua senha"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               aria-label="Senha da delegação">
+        <button type="button" class="eye" id="verSenha" aria-label="Mostrar senha">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+
+      <p class="fineprint">
+        Lembre-se de não compartilhar sua senha com membros de fora da sua delegação
+        e não-participantes da Simulação.
+      </p>
+
+      <div style="margin-top:22px">
+        <button class="btn btn--primary" type="submit" id="btnEntrar">Entrar</button>
+      </div>
+    </form>
+
+    <button class="linkbtn" id="btnPainel">Abrir tela de projeção</button>
+    <div class="spacer"></div>
+
+  </div>
+</div>
+
+<!-- folha: escolher delegação -->
+<div class="sheet" id="sheetDlg" role="dialog" aria-modal="true" aria-label="Selecione sua delegação">
+  <div class="sheet__box">
+    <div class="sheet__grab"></div>
+    <h2 class="sheet__title">Selecione sua delegação</h2>
+    <input class="search" id="busca" type="search" placeholder="Buscar país…" autocomplete="off">
+    <div class="sheet__list" id="listaDlg" role="listbox"></div>
+    <div class="sheet__actions">
+      <button class="btn btn--ghost" type="button" data-fechar>Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const sheet = $('#sheetDlg'), lista = $('#listaDlg'), busca = $('#busca');
+  let escolhida = null;
+
+  /* ---- lista de delegações ---- */
+  const semAcento = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  function pintar(filtro = '') {
+    const f = semAcento(filtro.trim());
+    const itens = Config.delegacoes.filter(d => semAcento(d.nome).includes(f));
+    lista.innerHTML = itens.length
+      ? itens.map(d => `
+          <button type="button" class="pickitem" role="option"
+                  aria-selected="${escolhida && escolhida.nome === d.nome}" data-nome="${d.nome}">
+            <span class="flag">${UI.bandeira(d.iso)}</span><span>${d.nome}</span>
+          </button>`).join('')
+      : `<p class="empty">Nenhuma delegação encontrada.</p>`;
+  }
+
+  lista.addEventListener('click', e => {
+    const b = e.target.closest('.pickitem'); if (!b) return;
+    escolhida = Config.acharDelegacao(b.dataset.nome);
+    $('#dlgFlag').textContent = UI.bandeira(escolhida.iso);
+    $('#dlgFlag').hidden = false;
+    $('#dlgTexto').textContent = escolhida.nome;
+    $('#dlgTexto').classList.remove('pill__ph');
+    $('#btnDelegacao').setAttribute('aria-expanded', 'false');
+    UI.fechar(sheet);
+    $('#senha').focus();
+  });
+
+  busca.addEventListener('input', () => pintar(busca.value));
+
+  $('#btnDelegacao').addEventListener('click', () => {
+    pintar(busca.value = '');
+    $('#btnDelegacao').setAttribute('aria-expanded', 'true');
+    UI.abrir(sheet);
+    setTimeout(() => busca.focus(), 260);
+  });
+
+  $$('[data-fechar]').forEach(b => b.addEventListener('click', () => {
+    $('#btnDelegacao').setAttribute('aria-expanded', 'false');
+    UI.fechar(sheet);
+  }));
+  sheet.addEventListener('click', e => { if (e.target === sheet) UI.fechar(sheet); });
+
+  /* ---- mostrar/ocultar senha ---- */
+  $('#verSenha').addEventListener('click', () => {
+    const i = $('#senha');
+    const mostrando = i.type === 'text';
+    i.type = mostrando ? 'password' : 'text';
+    $('#verSenha').setAttribute('aria-label', mostrando ? 'Mostrar senha' : 'Ocultar senha');
+    i.focus();
+  });
+
+  /* ---- entrar ---- */
+  $('#formEntrada').addEventListener('submit', async e => {
+    e.preventDefault();
+    const senha = $('#senha').value;
+
+    if (!escolhida) { UI.aviso('Selecione sua delegação primeiro.', true); sacudir($('#btnDelegacao')); return; }
+    if (!senha)     { UI.aviso('Informe a senha da sua delegação.', true); sacudir($('#senha')); return; }
+
+    const btn = $('#btnEntrar');
+    btn.disabled = true; btn.textContent = 'Verificando…';
+
+    const ok = await UI.conferirSenha(escolhida, senha);
+    if (!ok) {
+      btn.disabled = false; btn.textContent = 'Entrar';
+      UI.aviso('Senha incorreta para ' + escolhida.nome + '.', true);
+      sacudir($('#senha'));
+      $('#senha').value = ''; $('#senha').focus();
+      return;
+    }
+
+    UI.sessao.salvar({ nome: escolhida.nome, iso: escolhida.iso });
+    location.href = UI.href('pedido/');
+  });
+
+  function sacudir(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+  $('#btnPainel').addEventListener('click', () => location.href = UI.href('painel/'));
+
+  /* se a delegação já entrou nesta aba, deixa o campo pronto */
+  const anterior = UI.sessao.ler();
+  if (anterior) {
+    escolhida = Config.acharDelegacao(anterior.nome);
+    if (escolhida) {
+      $('#dlgFlag').textContent = UI.bandeira(escolhida.iso);
+      $('#dlgFlag').hidden = false;
+      $('#dlgTexto').textContent = escolhida.nome;
+      $('#dlgTexto').classList.remove('pill__ph');
+    }
+  }
+})();
+</script>
+</body>
+</html>
