@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1119">
+<title>Pedido de fala — SimuLADI</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/ui.js"></script>
+</head>
+<body data-raiz="../">
+<div class="bg"></div>
+
+<div class="wrap">
+
+  <div class="banner banner--erro" id="avisoConexao" role="alert" hidden>
+    <b>Sem conexão.</b> Sua posição na fila está congelada até a internet voltar.
+  </div>
+
+  <div class="col">
+
+    <div class="spacer"></div>
+
+    <header class="brand brand--sm">
+      <span class="brand__mark"><img src="../assets/img/logo.png" alt="" onerror="this.onerror=null;UI.logoFallback(this)"></span>
+      <div>
+        <h1 class="brand__name">SimuLADI</h1>
+      </div>
+    </header>
+
+    <!-- ============ ETAPA 1: escolher o pedido ============ -->
+    <section id="viewEscolha" class="view">
+      <h2 class="h-hello">Bem-vindo, <b id="oiDelegacao">—</b>!</h2>
+      <p class="h-ask">Deseja solicitar uma questão ou moção?</p>
+
+      <div id="categorias"></div>
+
+      <div class="stack acoes">
+        <button class="btn btn--primary" id="btnEnviar" disabled>Enviar pedido</button>
+        <button class="btn btn--ghost" id="btnSemPedido">Apenas pedir a palavra</button>
+      </div>
+      <button class="linkbtn" id="btnTrocar">Trocar de delegação</button>
+    </section>
+
+    <!-- ============ ETAPA 2: na fila ============ -->
+    <section id="viewFila" class="view" hidden>
+      <div id="cartaoEstado" aria-live="polite"></div>
+
+      <div class="stack acoes">
+        <button class="btn btn--realce" id="btnTerminei" hidden>Terminei de falar</button>
+        <button class="btn btn--danger" id="btnSair">Remover meu pedido</button>
+      </div>
+      <p class="fineprint">
+        Se você fechar o navegador, seu pedido sai da fila automaticamente.
+        Para pedir de novo, será necessário reiniciar o processo.
+      </p>
+    </section>
+
+    <div class="spacer"></div>
+
+  </div>
+</div>
+
+<!-- folha: confirmação -->
+<div class="sheet" id="sheetConf" role="dialog" aria-modal="true" aria-labelledby="confTitulo">
+  <div class="sheet__box">
+    <div class="sheet__grab"></div>
+    <h2 class="sheet__title" id="confTitulo">Confirmar pedido de fala</h2>
+    <p class="sheet__desc" id="confDesc">Você entrará na fila na ordem em que o pedido for registrado.</p>
+    <div class="recap">
+      <span class="flag" id="confFlag" style="font-size:26px"></span>
+      <div>
+        <div class="recap__k" id="confTipo">—</div>
+        <div class="recap__v" id="confOpcao">—</div>
+      </div>
+    </div>
+    <div class="sheet__actions">
+      <button class="btn btn--ghost" type="button" data-fechar>Voltar</button>
+      <button class="btn btn--realce" type="button" id="confOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/sync.js"></script>
+<script src="../assets/js/pedido.js"></script>
+</body>
+</html>
