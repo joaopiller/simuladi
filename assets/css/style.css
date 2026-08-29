@@ -512,3 +512,198 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159
 }
 .qr__aviso[hidden]{ display:none !important; }
 
+/* ============================ painel (projeção) ============================ */
+
+body.painel{ overflow:hidden; }
+.painel-wrap{
+  position:relative; height:100dvh;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);   /* sem isso a coluna cresce com o conteúdo */
+  grid-template-rows:auto minmax(0,1fr) auto;
+  padding:26px clamp(20px,4vw,56px) 22px; gap:22px;
+}
+.painel-top{ display:flex; align-items:center; gap:16px; }
+.painel-top .brand{ margin:0; }
+.painel-top__end{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+
+.stage{
+  display:grid; gap:20px; min-height:0; overflow:auto;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:'agora' 'pedidos' 'fila';
+}
+.area-agora  { grid-area:agora;   min-width:0; min-height:0; }
+.area-pedidos{ grid-area:pedidos; min-width:0; min-height:0; display:flex; flex-direction:column; }
+.area-fila   { grid-area:fila;    min-width:0; }
+
+@media(min-width:1000px){
+  .stage{
+    /* o orador ocupa 2/3; a lista de questões, 1/3 e nunca mais alta que ele */
+    grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) auto;
+    grid-template-areas:'agora pedidos' 'fila fila';
+    align-items:stretch;
+  }
+}
+
+.col__titulo{
+  font-size:12.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+  color:rgba(255,255,255,.5); margin:0 0 12px;
+}
+
+.now{
+  border-radius:30px; padding:clamp(26px,4vw,54px);
+  border:1.5px solid rgba(226,233,242,.32);
+  background:linear-gradient(150deg, rgba(226,233,242,.13), rgba(226,233,242,.02));
+  min-height:min(46dvh,420px); max-height:100%; overflow:auto;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.now__kicker{ font-size:clamp(12px,1.1vw,15px); font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:rgba(226,233,242,.72); margin:0 0 14px; }
+.now__flag{ font-size:clamp(48px,6vw,86px); line-height:1; margin-bottom:8px; }
+.now__name{
+  font-family:'Outfit',sans-serif; font-weight:600;
+  font-size:clamp(40px,7vw,104px); line-height:1.02; letter-spacing:-.03em; margin:0 0 18px;
+  text-wrap:balance;
+}
+.now__what{
+  display:inline-flex; align-items:center; gap:12px; align-self:flex-start;
+  font-size:clamp(17px,2.1vw,30px); font-weight:500; line-height:1.25;
+  padding:12px 22px; border-radius:var(--r-pill);
+  background:rgba(255,255,255,.1); border:1px solid var(--hair);
+  text-wrap:balance;
+}
+.now__timer{
+  margin-top:20px; font-variant-numeric:tabular-nums;
+  font-size:clamp(15px,1.7vw,22px); color:rgba(255,255,255,.6); font-weight:600;
+  letter-spacing:.04em;
+}
+.now--empty{ border-color:var(--hair); background:var(--veil); text-align:center; align-items:center; }
+.now--empty .now__name{ font-weight:300; color:rgba(255,255,255,.72); font-size:clamp(26px,3.4vw,46px); }
+
+/* --- botão da mesa para encerrar a fala em andamento --- */
+.now__x{
+  display:none; align-self:flex-start; margin-top:22px;
+  padding:10px 20px; border-radius:var(--r-pill);
+  background:rgba(221,106,86,.16); border:1px solid rgba(221,106,86,.45);
+  color:#ffc3b7; font:inherit; font-size:14.5px; font-weight:600; cursor:pointer;
+}
+.now__x:hover{ background:rgba(221,106,86,.26); }
+.now__x:focus-visible{ outline:2px solid var(--foco); outline-offset:2px; }
+body.mesa-on .now__x{ display:block; }
+
+/* --- lista de questões e moções (persiste até a mesa remover) --- */
+.pedidos{
+  list-style:none; margin:0; padding:0 2px 0 0;
+  display:flex; flex-direction:column; gap:8px;
+  flex:1; min-height:0; overflow-y:auto;
+}
+.pedido{
+  display:grid; gap:3px 10px; align-items:center;
+  grid-template-columns:auto 1fr auto;
+  grid-template-areas:'tag quem x' 'texto texto texto';
+  padding:11px 13px; border-radius:14px;
+  background:rgba(255,255,255,.06); border:1px solid var(--hair);
+  animation:rowIn .3s var(--ease) both;
+}
+.pedido__tag{
+  grid-area:tag; justify-self:start;
+  font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  padding:3px 8px; border-radius:var(--r-pill);
+}
+.pedido__texto{
+  grid-area:texto; font-size:clamp(13.5px,1.15vw,16px); font-weight:600; line-height:1.3;
+}
+.pedido__quem{ grid-area:quem; justify-self:end; display:flex; flex-wrap:wrap; gap:2px; }
+.pedido__flag{ font-size:14px; line-height:1; }
+.pedido__x{
+  grid-area:x; width:24px; height:24px; border-radius:50%; display:none; flex:none;
+  background:rgba(221,106,86,.18); border:1px solid rgba(221,106,86,.45);
+  color:#ffb9ac; font-size:13px; line-height:1; cursor:pointer;
+}
+body.mesa-on .pedido__x{ display:block; }
+
+/* --- fila de países, em faixa embaixo --- */
+.fila{
+  list-style:none; margin:0; padding:2px;
+  display:flex; gap:9px; overflow-x:auto; scrollbar-width:thin;
+}
+.fila__item{
+  flex:none; display:flex; align-items:center; gap:9px;
+  padding:9px 14px; border-radius:var(--r-pill);
+  background:rgba(255,255,255,.06); border:1px solid var(--hair);
+  animation:rowIn .3s var(--ease) both;
+}
+.fila__n{
+  flex:none; width:24px; height:24px; border-radius:50%; display:grid; place-items:center;
+  font-family:'Outfit',sans-serif; font-weight:600; font-size:13px;
+  background:rgba(255,255,255,.13);
+}
+.fila__nome{ font-size:clamp(14px,1.2vw,17px); font-weight:600; white-space:nowrap; }
+.fila__x{
+  flex:none; width:22px; height:22px; border-radius:50%; display:none;
+  background:rgba(221,106,86,.18); border:1px solid rgba(221,106,86,.45);
+  color:#ffb9ac; font-size:12px; line-height:1; cursor:pointer;
+}
+body.mesa-on .fila__x{ display:block; }
+/* o estado vazio segue o alinhamento do título da coluna e dos itens,
+   em vez de ficar centralizado e parecendo deslocado */
+/* sem recuo lateral: o texto começa na mesma coluna do título da seção,
+   já que aqui não há cartão com fundo para justificar o respiro interno */
+.pedidos .empty,
+.fila .empty{
+  text-align:left; font-size:14px; padding:12px 0;
+}
+
+.painel-foot{ display:flex; align-items:center; gap:14px; font-size:13px; color:rgba(255,255,255,.45); }
+.painel-foot__end{ margin-left:auto; display:flex; gap:9px; align-items:center; }
+
+.iconbtn{
+  width:40px; height:40px; border-radius:50%; display:grid; place-items:center;
+  background:var(--veil); border:1px solid var(--hair); color:#fff;
+  cursor:pointer; font-size:16px;
+}
+.iconbtn:hover{ background:rgba(255,255,255,.14); }
+
+/* --- janelas baixas (notebook, projetor 4:3): o cartão precisa encolher
+       junto, senão empurra o rodapé para fora e some com os botões --- */
+@media (min-width:761px) and (max-height:780px){
+  .painel-wrap{ gap:14px; padding:16px clamp(16px,3vw,40px) 14px; }
+  .now{ padding:clamp(18px,2.6vw,34px); min-height:0; border-radius:24px; }
+  .now__kicker{ margin-bottom:8px; }
+  .now__flag{ font-size:clamp(32px,3.8vw,54px); margin-bottom:4px; }
+  .now__name{ font-size:clamp(30px,4.8vw,66px); margin-bottom:12px; }
+  .now__what{ font-size:clamp(15px,1.6vw,22px); padding:9px 17px; }
+  .now__timer{ margin-top:12px; }
+  .now__x{ margin-top:14px; padding:7px 16px; font-size:13.5px; }
+  .pedido{ padding:9px 12px; }
+}
+
+/* --- painel em telas estreitas (celular/tablet da mesa) --- */
+@media (max-width:760px){
+  body.painel{ overflow:auto; }
+  .painel-wrap{
+    height:auto; min-height:100dvh;
+    grid-template-rows:auto auto auto;
+    gap:16px; padding:16px 14px calc(18px + env(safe-area-inset-bottom));
+  }
+  .stage{ overflow:visible; }
+  .pedidos{ max-height:none; }
+  .painel-top{ flex-wrap:wrap; gap:12px; }
+  .painel-top__end{ margin-left:0; width:100%; flex-wrap:wrap; }
+  .now{ min-height:0; padding:24px 20px; border-radius:24px; }
+  .now__flag{ font-size:44px; }
+  .now__name{ font-size:clamp(32px,9vw,52px); }
+  .pedidos{ overflow:visible; }
+  /* a faixa horizontal de países não cabe num celular: vira lista */
+  .fila{ flex-direction:column; overflow-x:visible; gap:7px; padding:0; }
+  .fila__item{ width:100%; border-radius:var(--r-soft); }
+  .fila__nome{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .fila__x{ margin-left:auto; }
+  .painel-foot{ flex-wrap:wrap; gap:10px; }
+  /* com o modo mesa ligado são 5 controles: precisam poder quebrar em linhas */
+  .painel-foot__end{ margin-left:0; width:100%; flex-wrap:wrap; gap:8px; }
+  .painel-foot__end .btn{ flex:1 1 auto; min-width:0; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
+}

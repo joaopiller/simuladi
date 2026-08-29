@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1119">
+<title>Tela de projeção — SimuLADI</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/ui.js"></script>
+</head>
+<body data-raiz="../" class="painel">
+<div class="bg"></div>
+
+<div class="painel-wrap">
+
+  <header class="painel-top">
+    <div class="brand brand--sm">
+      <span class="brand__mark"><img src="../assets/img/logo.png" alt="" onerror="this.onerror=null;UI.logoFallback(this)"></span>
+      <div>
+        <h1 class="brand__name">SimuLADI</h1>
+      </div>
+    </div>
+    <div class="painel-top__end">
+      <span class="chip chip--erro" id="avisoConexao" role="alert" hidden>Sem conexão com o servidor</span>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="area-agora" id="agora" aria-live="polite"></section>
+
+    <aside class="area-pedidos">
+      <p class="col__titulo">Questões e moções solicitadas · <span id="qtdPedidos">0</span></p>
+      <ul class="pedidos" id="listaPedidos"></ul>
+    </aside>
+
+    <section class="area-fila">
+      <p class="col__titulo">Fila de países · <span id="qtd">0</span></p>
+      <ul class="fila" id="proximos"></ul>
+    </section>
+  </main>
+
+  <footer class="painel-foot">
+    <span id="rodapeInfo"></span>
+    <div class="painel-foot__end">
+      <button class="btn btn--sm btn--ghost" id="btnQR">QR code</button>
+      <button class="btn btn--sm btn--ghost" id="btnMesa">Modo mesa</button>
+      <button class="btn btn--sm btn--danger" id="btnLimpar" hidden>Limpar fila</button>
+      <button class="btn btn--sm btn--danger" id="btnLimparPedidos" hidden>Limpar questões</button>
+      <button class="iconbtn" id="btnTela" title="Tela cheia" aria-label="Tela cheia">⛶</button>
+    </div>
+  </footer>
+
+</div>
+
+<!-- janela grande do QR code -->
+<div class="qr" id="qr" role="dialog" aria-modal="true" aria-labelledby="qrTitulo">
+  <div class="qr__caixa">
+    <button class="qr__fechar" id="qrFechar" type="button" aria-label="Fechar">&times;</button>
+    <p class="qr__titulo" id="qrTitulo">Aponte a câmera do celular</p>
+    <div class="qr__papel"><canvas id="qrCanvas" aria-label="QR code de acesso ao site"></canvas></div>
+    <p class="qr__url" id="qrUrl"></p>
+    <p class="qr__dica">Ou digite o endereço acima no navegador.</p>
+    <p class="qr__aviso" id="qrAviso" hidden>
+      <b>Atenção:</b> este endereço só funciona neste computador. Publique o site e abra
+      a tela de projeção pelo endereço publicado, senão os celulares não vão conseguir abrir.
+    </p>
+  </div>
+</div>
+
+<!-- folha: senha da mesa -->
+<div class="sheet" id="sheetMesa" role="dialog" aria-modal="true" aria-labelledby="mesaTit">
+  <div class="sheet__box">
+    <div class="sheet__grab"></div>
+    <h2 class="sheet__title" id="mesaTit">Modo mesa diretora</h2>
+    <p class="sheet__desc">Libera a remoção de pedidos individuais e a limpeza da fila.</p>
+    <input class="search" id="senhaMesa" type="password" placeholder="Senha da mesa" autocomplete="off">
+    <div class="sheet__actions">
+      <button class="btn btn--ghost" type="button" data-fechar>Cancelar</button>
+      <button class="btn btn--realce" type="button" id="mesaOk">Liberar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/sync.js"></script>
+<script src="../assets/js/qr.js"></script>
+<script src="../assets/js/painel.js"></script>
+</body>
+</html>
