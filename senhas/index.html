@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gerador de senhas — SimuLADI</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .painel-wrap{ grid-template-rows:auto auto 1fr; }
+  .saida{
+    width:100%; min-height:340px; margin-top:14px; padding:16px;
+    background:rgba(0,0,0,.4); border:1px solid var(--hair); border-radius:var(--r-soft);
+    color:#e8ddcd; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12.5px; line-height:1.6; white-space:pre; overflow:auto; resize:vertical;
+  }
+  .linha{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .linha .btn{ width:auto; min-height:46px; font-size:15px; }
+  .aviso-box{ max-width:820px; }
+</style>
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/ui.js"></script>
+</head>
+<body data-raiz="../">
+<div class="bg"></div>
+
+<div class="painel-wrap">
+  <header class="painel-top">
+    <div class="brand brand--sm">
+      <span class="brand__mark"><img src="../assets/img/logo.png" alt="" onerror="this.onerror=null;UI.logoFallback(this)"></span>
+      <div>
+        <h1 class="brand__name">SimuLADI</h1>
+        <p class="brand__sub">Gerador de senhas</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner aviso-box" style="width:auto">
+    <b>Por que usar isto?</b> As senhas escritas em <code>config.js</code> ficam visíveis para quem abrir o
+    código-fonte da página. Este gerador troca cada senha por um <b>hash SHA-256</b>: o site continua
+    validando a senha normalmente, mas ela não aparece mais no código.
+    Gere aqui, cole no <code>config.js</code> e entregue a lista de senhas às delegações.
+  </div>
+
+  <main style="max-width:900px">
+    <h3 style="font-size:16px;font-weight:700;margin:0 0 8px">Senha da mesa diretora</h3>
+    <div class="linha">
+      <input class="search" id="senhaMesaTxt" type="text" placeholder="Escreva a senha da mesa…"
+             autocomplete="off" style="width:auto;flex:1;min-width:220px;margin:0">
+      <button class="btn btn--ghost" id="btnMesaHash">Gerar hash da mesa</button>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:700;margin:26px 0 8px">Senhas das delegações</h3>
+    <div class="linha">
+      <button class="btn btn--realce" id="btnGerar">Gerar senhas novas</button>
+      <button class="btn btn--ghost" id="btnConfig">Ver bloco do config.js</button>
+      <button class="btn btn--ghost" id="btnLista">Ver lista para entregar</button>
+      <button class="btn btn--ghost" id="btnCopiar">Copiar</button>
+    </div>
+    <textarea class="saida" id="saida" readonly spellcheck="false">Clique em "Gerar senhas novas" para começar.</textarea>
+  </main>
+</div>
+
+<script>
+(() => {
+  let dados = [];
+
+  function senhaAleatoria() {
+    const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ';      // sem I e O, que confundem
+    const nums   = '23456789';                       // sem 0 e 1
+    const sorteia = (s, n) => Array.from(crypto.getRandomValues(new Uint8Array(n)))
+                                   .map(b => s[b % s.length]).join('');
+    return `${sorteia(letras, 3)}-${sorteia(nums, 4)}`;
+  }
+
+  async function gerar() {
+    dados = [];
+    for (const d of Config.delegacoes) {
+      const senha = senhaAleatoria();
+      dados.push({ nome: d.nome, iso: d.iso, senha, hash: await UI.sha256(senha) });
+    }
+    verConfig();
+    UI.aviso(`${dados.length} senhas geradas.`);
+  }
+
+  function verConfig() {
+    if (!dados.length) return UI.aviso('Gere as senhas primeiro.', true);
+    $('#saida').value =
+      '  delegacoes: [\n' +
+      dados.map(d =>
+        `    { nome: '${d.nome.replace(/'/g, "\\'")}', iso: '${d.iso}', hash: '${d.hash}' }`
+      ).join(',\n') +
+      '\n  ],\n\n// Substitua o bloco "delegacoes" do arquivo assets/js/config.js por este.';
+  }
+
+  function verLista() {
+    if (!dados.length) return UI.aviso('Gere as senhas primeiro.', true);
+    const larg = Math.max(...dados.map(d => d.nome.length));
+    $('#saida').value =
+      'SENHAS DAS DELEGAÇÕES — não publicar\n' +
+      '='.repeat(larg + 14) + '\n' +
+      dados.map(d => `${d.nome.padEnd(larg + 2)}${d.senha}`).join('\n');
+  }
+
+  $('#btnMesaHash').addEventListener('click', async () => {
+    const senha = $('#senhaMesaTxt').value.trim();
+    if (!senha) return UI.aviso('Escreva a senha da mesa primeiro.', true);
+    const hash = await UI.sha256(senha);
+    $('#saida').value =
+      `  senhaMesa: '',\n` +
+      `  hashMesa: '${hash}',\n\n` +
+      `// Substitua as duas linhas correspondentes em assets/js/config.js.\n` +
+      `// Guarde a senha "${senha}" com a mesa — ela não pode ser recuperada a partir do hash.`;
+    UI.aviso('Hash da mesa gerado.');
+  });
+
+  $('#btnGerar').addEventListener('click', gerar);
+  $('#btnConfig').addEventListener('click', verConfig);
+  $('#btnLista').addEventListener('click', verLista);
+  $('#btnCopiar').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('#saida').value); UI.aviso('Copiado!'); }
+    catch (e) { $('#saida').select(); UI.aviso('Selecione e copie manualmente.', true); }
+  });
+})();
+</script>
+</body>
+</html>
