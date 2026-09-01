@@ -162,10 +162,22 @@ Também gratuitos e com deploy automático.
 Depois é só apontar `www.simuladi.com.br` para a hospedagem escolhida
 (o domínio é o único custo real do projeto).
 
-> **Atenção ao cache:** depois de publicar uma alteração, quem já abriu o site pode
-> continuar vendo a versão antiga. Peça um recarregamento forçado
-> (`Ctrl+Shift+R`, ou `Cmd+Shift+R` no Mac) — ou publique as mudanças com
-> antecedência, antes do evento começar.
+### Sempre que publicar uma alteração: renove a versão dos arquivos
+
+Os endereços do CSS e do JavaScript nas páginas terminam com `?v=AAAAMMDD`. Esse
+número é o que faz o navegador buscar os arquivos novos em vez de reaproveitar os
+que já tem em cache. **Se você publicar sem trocá-lo, pode acontecer de o HTML e o
+JavaScript virem novos e o CSS vir antigo** — e o layout quebra de um jeito difícil
+de entender.
+
+Rode isto na pasta do projeto antes de publicar:
+
+```bash
+cd ~/Desktop/simuladi && V=$(date +%Y%m%d%H%M) && sed -i '' -E "s|(assets/(css\|js)/[a-z]+\.[a-z]+)\?v=[0-9]*|\1?v=$V|g" index.html */index.html && echo "versão dos arquivos atualizada para $V"
+```
+
+Se mesmo assim alguém estiver vendo a versão antiga, um recarregamento forçado
+resolve: `Cmd+Shift+R` no Mac, `Ctrl+Shift+R` no Windows.
 
 ---
 
