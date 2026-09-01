@@ -176,7 +176,10 @@ delegações, senhas, lista de questões e moções, senha da mesa e nome da sal
 
 **Imagens** (opcionais, ambas com fallback automático):
 
-- `assets/img/logo.png` — o brasão da LADI. Sem ele, aparece um emblema genérico.
+- `assets/img/logo.png` — o brasão oficial da LADI, já incluído (192px, fundo
+  transparente). Se o arquivo sumir, o site desenha um emblema genérico no lugar.
+- `assets/img/favicon.png` e `assets/img/apple-touch-icon.png` — ícone da aba do
+  navegador e da tela inicial do celular, gerados a partir do mesmo brasão.
 - `assets/img/bg.jpg` — foto do plenário da ONU ao fundo. Sem ela, fica só o gradiente escuro.
 
 **Vários comitês ao mesmo tempo:** cada comitê tem sua própria fila, isolada das

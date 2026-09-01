@@ -25,13 +25,23 @@
     if (nova === assinatura) return;
     assinatura = nova;
 
+    // Sem a bandeira, o nome é o único elemento do cartão e pode crescer — mas um
+    // nome longo em corpo grande invade o rótulo e o cronômetro. A escala segue o
+    // comprimento: quase todas as delegações são curtas e ganham o corpo maior.
+    const escala = !primeiro ? '' :
+      primeiro.delegacao.length <= 14 ? ' now__name--g' :
+      primeiro.delegacao.length <= 26 ? ' now__name--m' : ' now__name--p';
+
     $('#agora').innerHTML = primeiro
       ? `<div class="now">
            <p class="now__kicker">Com a palavra</p>
-           <div class="now__flag">${UI.bandeira(primeiro.iso)}</div>
-           <h2 class="now__name">${primeiro.delegacao}</h2>
-           <p class="now__timer" id="cron">00:00</p>
-           <button class="now__x" type="button" data-remover="${primeiro.key}">Encerrar fala</button>
+           <div class="now__miolo">
+             <h2 class="now__name${escala}">${primeiro.delegacao}</h2>
+           </div>
+           <div class="now__base">
+             <p class="now__timer" id="cron">00:00</p>
+             <button class="now__x" type="button" data-remover="${primeiro.key}">Encerrar fala</button>
+           </div>
          </div>`
       : `<div class="now now--empty">
            <h2 class="now__name">Nenhum pedido de fala no momento</h2>
