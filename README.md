@@ -237,7 +237,7 @@ do banco.
   - a **lista de questões e moções**, que só a mesa diretora remove. Quando um país
     sai da fila, a questão dele **permanece** na lista.
 - Uma delegação pode **entrar na fila sem selecionar** questão nem moção, pelo botão
-  *Apenas pedir a palavra*.
+  *Inscrição na Lista de Oradores*.
 - Se duas ou mais delegações pedirem a **mesma** questão ou moção, ela aparece **uma
   vez só** na lista, com as bandeirinhas de quem solicitou.
 - A ordem é **por chegada**: quem confirma primeiro fica em primeiro.

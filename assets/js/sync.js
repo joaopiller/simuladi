@@ -125,12 +125,12 @@ const Sync = (() => {
     remover(key) { gravarFila((ler(K_FILA) || []).filter(e => e.key !== key)); return Promise.resolve(); },
     limpar()     { gravarFila([]); return Promise.resolve(); },
 
-    registrarPedido({ categoria, titulo, opcao, delegacao, iso }) {
+    registrarPedido({ categoria, titulo, opcao, delegacao, bandeira }) {
       const chave = chaveDe(opcao);
       const tudo = ler(K_PEDIDOS) || {};
       const atual = tudo[chave] || { categoria, titulo, opcao, ordem: Date.now(), solicitantes: {} };
       atual.categoria = categoria; atual.titulo = titulo; atual.opcao = opcao;
-      atual.solicitantes[chaveDe(delegacao)] = { nome: delegacao, iso };
+      atual.solicitantes[chaveDe(delegacao)] = { nome: delegacao, bandeira };
       tudo[chave] = atual;
       gravarPedidos(tudo);
       return Promise.resolve(chave);
@@ -206,14 +206,14 @@ const Sync = (() => {
     remover(key) { return refFila.child(key).remove(); },
     limpar()     { return refFila.remove(); },
 
-    async registrarPedido({ categoria, titulo, opcao, delegacao, iso }) {
+    async registrarPedido({ categoria, titulo, opcao, delegacao, bandeira }) {
       const chave = chaveDe(opcao);
       const ref = refPedidos.child(chave);
       // "ordem" só na criação, para a lista manter a ordem da 1ª solicitação
       const jaExiste = (await ref.child('ordem').once('value')).exists();
       const dados = { categoria, titulo, opcao };
       if (!jaExiste) dados.ordem = firebase.database.ServerValue.TIMESTAMP;
-      dados[`solicitantes/${chaveDe(delegacao)}`] = { nome: delegacao, iso };
+      dados[`solicitantes/${chaveDe(delegacao)}`] = { nome: delegacao, bandeira };
       await ref.update(dados);
       return chave;
     },

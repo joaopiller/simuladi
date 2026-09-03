@@ -7,10 +7,15 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
 const UI = {
 
-  /* bandeira emoji a partir do código ISO de 2 letras */
-  bandeira(iso) {
-    if (!iso || iso.length !== 2) return '🏳️';
-    return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+  /* Bandeira da delegação.
+     Duas letras = código do país, convertido para o emoji da bandeira.
+     Qualquer outra coisa é usada como está — serve para delegações que não
+     têm bandeira no padrão Unicode (URSS, Iugoslávia). */
+  bandeira(valor) {
+    if (!valor) return '🏳️';
+    if (/^[A-Za-z]{2}$/.test(valor))
+      return String.fromCodePoint(...[...valor.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+    return valor;
   },
 
   /* aviso flutuante */

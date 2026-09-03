@@ -7,9 +7,9 @@
 <title>SimuLADI — Pedido de fala</title>
 <link rel="icon" type="image/png" href="assets/img/favicon.png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
-<link rel="stylesheet" href="assets/css/style.css?v=202609011239">
-<script src="assets/js/config.js?v=202609011239"></script>
-<script src="assets/js/ui.js?v=202609011239"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=202609011927">
+<script src="assets/js/config.js?v=202609011927"></script>
+<script src="assets/js/ui.js?v=202609011927"></script>
 </head>
 <body>
 <div class="bg"></div>
@@ -97,7 +97,7 @@
       ? itens.map(d => `
           <button type="button" class="pickitem" role="option"
                   aria-selected="${escolhida && escolhida.nome === d.nome}" data-nome="${d.nome}">
-            <span class="flag">${UI.bandeira(d.iso)}</span><span>${d.nome}</span>
+            <span class="flag">${UI.bandeira(d.bandeira)}</span><span>${d.nome}</span>
           </button>`).join('')
       : `<p class="empty">Nenhuma delegação encontrada.</p>`;
   }
@@ -105,7 +105,7 @@
   lista.addEventListener('click', e => {
     const b = e.target.closest('.pickitem'); if (!b) return;
     escolhida = Config.acharDelegacao(b.dataset.nome);
-    $('#dlgFlag').textContent = UI.bandeira(escolhida.iso);
+    $('#dlgFlag').textContent = UI.bandeira(escolhida.bandeira);
     $('#dlgFlag').hidden = false;
     $('#dlgTexto').textContent = escolhida.nome;
     $('#dlgTexto').classList.remove('pill__ph');
@@ -158,7 +158,7 @@
       return;
     }
 
-    UI.sessao.salvar({ nome: escolhida.nome, iso: escolhida.iso });
+    UI.sessao.salvar({ nome: escolhida.nome, bandeira: escolhida.bandeira });
     location.href = UI.href('pedido/');
   });
 
@@ -171,7 +171,7 @@
   if (anterior) {
     escolhida = Config.acharDelegacao(anterior.nome);
     if (escolhida) {
-      $('#dlgFlag').textContent = UI.bandeira(escolhida.iso);
+      $('#dlgFlag').textContent = UI.bandeira(escolhida.bandeira);
       $('#dlgFlag').hidden = false;
       $('#dlgTexto').textContent = escolhida.nome;
       $('#dlgTexto').classList.remove('pill__ph');

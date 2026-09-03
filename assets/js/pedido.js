@@ -65,17 +65,17 @@
   const sheet = $('#sheetConf');
 
   function abrirConfirmacao() {
-    $('#confFlag').textContent = UI.bandeira(delegacao.iso);
+    $('#confFlag').textContent = UI.bandeira(delegacao.bandeira);
     if (selecao) {
       $('#confTitulo').textContent = 'Confirmar pedido de fala';
       $('#confDesc').textContent   = 'Você entra na fila, e a questão ou moção vai para a lista da mesa.';
       $('#confTipo').textContent   = selecao.titulo;
       $('#confOpcao').textContent  = selecao.opcao;
     } else {
-      $('#confTitulo').textContent = 'Pedir a palavra';
-      $('#confDesc').textContent   = 'Você entra na fila sem registrar questão nem moção.';
+      $('#confTitulo').textContent = 'Inscrição na Lista de Oradores';
+      $('#confDesc').textContent   = 'Você entra na fila para discursar, sem registrar questão nem moção.';
       $('#confTipo').textContent   = delegacao.nome;
-      $('#confOpcao').textContent  = 'Sem questão ou moção';
+      $('#confOpcao').textContent  = 'Inscrição na Lista de Oradores';
     }
     UI.abrir(sheet);
   }
@@ -109,13 +109,13 @@
           titulo: selecao.titulo,
           opcao: selecao.opcao,
           delegacao: delegacao.nome,
-          iso: delegacao.iso
+          bandeira: delegacao.bandeira
         });
       }
 
       minhaKey = await Sync.entrar({
         delegacao: delegacao.nome,
-        iso: delegacao.iso,
+        bandeira: delegacao.bandeira,
         ...(selecao ? { categoria: selecao.categoria, titulo: selecao.titulo, opcao: selecao.opcao } : {})
       });
       UI.fechar(sheet);
@@ -205,7 +205,7 @@
            <p class="wait__pos">${naFrente}</p>
            <p class="wait__label">${naFrente === 1 ? 'delegação na sua frente' : 'delegações na sua frente'}</p>
            <p class="wait__title">Aguarde sua vez de falar</p>
-           <p class="wait__what">${eu.opcao || 'Apenas pedido de fala'}</p>
+           <p class="wait__what">${eu.opcao || 'Inscrição na Lista de Oradores'}</p>
          </div>`;
 
     // quem está falando tem só "Terminei de falar"; quem espera, só "Remover meu pedido"

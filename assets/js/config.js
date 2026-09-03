@@ -64,59 +64,40 @@ const Config = {
 
   /* ---------------------------------------------------------
      5. DELEGAÇÕES E SENHAS
-     iso   -> código de 2 letras, usado só para mostrar a bandeira
+     bandeira -> código de 2 letras do país (vira a bandeira automaticamente)
+              OU um emoji direto, para delegações históricas que não têm
+              bandeira no padrão Unicode (URSS, Iugoslávia)
      senha -> senha em texto simples (fácil de começar)
      hash  -> alternativa segura: SHA-256 da senha.
               Gere em senhas.html e cole aqui no lugar de "senha".
               Se existir "hash", o campo "senha" é ignorado.
      --------------------------------------------------------- */
-    delegacoes: [
-    { nome: 'África do Sul', iso: 'ZA', hash: '632ec91b23fd18f96ecb293ca4f0db434b13149be04368810b29e9d7d64dcf67' },
-    { nome: 'Alemanha', iso: 'DE', hash: '6f1d341d95537fb2fff2c5f88da236c076683164bf0ee8fa08156efe456c71fa' },
-    { nome: 'Arábia Saudita', iso: 'SA', hash: 'fb424427f1ed19d345839179f660471df3f9708d1edb4e47a3641132e6f09b24' },
-    { nome: 'Argentina', iso: 'AR', hash: '84439d8c4691a981364585c08d23cea22c56a9083cd5f7646be0bb12b05d7c7b' },
-    { nome: 'Austrália', iso: 'AU', hash: 'fd98fdc4120f5e07d4426787311d46e1ba36f9e9333ab1f7f43af4f0dd29e4f7' },
-    { nome: 'Bélgica', iso: 'BE', hash: 'ec70d8b9db30df3475dc99e037885227098b1378e656575297931c07aa6d4213' },
-    { nome: 'Bolívia', iso: 'BO', hash: 'cd73efae611f73c314df2bbd5b81dc6166d3654b4d03c10f3f572853bb418aae' },
-    { nome: 'Brasil', iso: 'BR', hash: 'e8d3b4c342398ab05dc3289597e41230374a00782efe555c65168fcfe3ca9c48' },
-    { nome: 'Canadá', iso: 'CA', hash: 'dbf8855e3aaea0ab5440472c13bcdb1ea42ff6b369040735dbdfa18d23338415' },
-    { nome: 'Catar', iso: 'QA', hash: 'ea33d18ae5a36bcc4ea65e8994e7d0ac1bb8c8e79afed39a1ae79d19262fc7e4' },
-    { nome: 'Chile', iso: 'CL', hash: 'ba44d74947de5729419ae69f2f817ccdcf6ccf65b989f9f72630b2a875e4a614' },
-    { nome: 'China', iso: 'CN', hash: '110622fbc53ad0901981ddfc763e0782f9ac51fa25df2800bf4704dc9ec20ede' },
-    { nome: 'Colômbia', iso: 'CO', hash: '6bb6eb42bd73293fa68843c67221027cc18d7189a345ec381eed3299463e6f8f' },
-    { nome: 'Coreia do Sul', iso: 'KR', hash: 'd98ed5f253fa799f03324799e61a9f6260e791b66643077387a224aaf320a944' },
-    { nome: 'Cuba', iso: 'CU', hash: '0189c8ffc735a9427cfa0a3dd75a125fa65189c35868362fcc80fd1a9d5031fd' },
-    { nome: 'Egito', iso: 'EG', hash: 'fdb34f47935491d185274fa0ae26a618617342eacbbe20f10b43ea5fe54d4cec' },
-    { nome: 'Emirados Árabes Unidos', iso: 'AE', hash: '0d1de667edebd9d51f921908ab51214d7a74114b307e34392c95e473bf2d2568' },
-    { nome: 'Equador', iso: 'EC', hash: 'cdc48c527384c7b65cbd04c0c77e802715f6986c5ddd86fccf6baa1c53562bd0' },
-    { nome: 'Espanha', iso: 'ES', hash: '4a403113d65940043694a689f58f4e899b95a64381a4091f719dcfebec79dac1' },
-    { nome: 'Estados Unidos', iso: 'US', hash: 'debcc51747a029e89aa939e65f34b5b63b46a18d976c40faf4e889a5c0fcd431' },
-    { nome: 'Etiópia', iso: 'ET', hash: '4394adcd1050d8cc4f910213e6dc9e84cbfc7521e67c1109fe1fd6b546b4e592' },
-    { nome: 'França', iso: 'FR', hash: '1189b86a9facfed7e76d80d8014702c54e4c95fc8f238e529ba8286cc5639723' },
-    { nome: 'Gana', iso: 'GH', hash: 'cfe01b1b001a61568df90b366e5f30d874e6eecef7b7f1aac692bd9af99f51c2' },
-    { nome: 'Índia', iso: 'IN', hash: 'a7daf4cd3429552cb1e0a7e910a56e43f4d8094deb0da3c9c1b3a8ba0b332a22' },
-    { nome: 'Indonésia', iso: 'ID', hash: '434ca3a9c79d0c717be90b32d4f64f548fc3fc80386ef2c2f02a1fe51f402ec9' },
-    { nome: 'Irã', iso: 'IR', hash: 'b6bf598e6025be364e0b30bdb8ec4494905c129912688b327e9b7b5d0625acd6' },
-    { nome: 'Iraque', iso: 'IQ', hash: '7a20e624fe7543c3be17ff3b85b0cca1853c971b688d625cae80d3cc1179f6b7' },
-    { nome: 'Israel', iso: 'IL', hash: 'cbfda0c614a14cbdd97881beed4cb33c91cc9b0c6f9e6ba2be6ce7db97506251' },
-    { nome: 'Itália', iso: 'IT', hash: 'e75e278b28e7dbaa007de72c4646397a7231efb7e6a2e5b482f45b4cb3cd655b' },
-    { nome: 'Japão', iso: 'JP', hash: 'b5596e638a903f4f59048964d50a1006cec57b25c98650d45183936f8c399c65' },
-    { nome: 'Quênia', iso: 'KE', hash: '3b0f3d434eeac23435b15cbe8ee71197a644f6cd8fdd3c8b2ecd8ddf62d3153f' },
-    { nome: 'Líbano', iso: 'LB', hash: '497c4bfa16665d41c76bfaabd9b039a5c9384fc1abb196cd155f47c8fcb3b07a' },
-    { nome: 'México', iso: 'MX', hash: '57ce824d4f62a03519d49bec019be5551743e94ded5597df60a9dafec2d3861b' },
-    { nome: 'Nigéria', iso: 'NG', hash: 'dca4239b2a6b1b54f017c42ae056e6f12651e79e061de717f3b6b69d7a66cf57' },
-    { nome: 'Noruega', iso: 'NO', hash: '2bd840a10008726c9f090643ad2931c0b5c488c3fc13797fa264d9dc1b2e8d7c' },
-    { nome: 'Países Baixos', iso: 'NL', hash: '11fe7041eac2e75a7f75213105a21bb25877fbd4831fc11f8b6268f9def65f24' },
-    { nome: 'Paquistão', iso: 'PK', hash: '48d3ba6467cc56e642735164d581c96cdd5de6eff35b7a3609d6e599c2592626' },
-    { nome: 'Peru', iso: 'PE', hash: 'b9f0000c533217b62c9b5ea750fef985e75de9656ab3be5e78086437e5d71008' },
-    { nome: 'Polônia', iso: 'PL', hash: '7505e78dd8d2fbeff2b80cc46bb476a6e3bdd4bd63c7e4c19ac7a8327167db37' },
-    { nome: 'Portugal', iso: 'PT', hash: 'a7596730c6ca1f6f2a658e7b2e361f361f1b71a2f63ec74226b569da2ade14b1' },
-    { nome: 'Reino Unido', iso: 'GB', hash: '29612cbdd1a035ca9fed8cbfe7935a5dd0ac89c65eac233cc658063b8d06df58' },
-    { nome: 'Rússia', iso: 'RU', hash: '98c492fea5617d2c4cc129fadd0e031f2fd2ba2a21fc1877408300b39d9aaee2' },
-    { nome: 'Suíça', iso: 'CH', hash: '7928f45598b3591c06e82cc3e2bfdcfcc1018e07f8f58fefb863616f7094636c' },
-    { nome: 'Turquia', iso: 'TR', hash: '6d3e5094803766d16e9ce4d62841fcd2d5ff7454c3c1312bb96a8a6d9563ca29' },
-    { nome: 'Ucrânia', iso: 'UA', hash: '54ea57831c4e85e68d464cb4d627c445eaa1e74cc2dfbfa3f26d91912b235b2e' },
-    { nome: 'Venezuela', iso: 'VE', hash: 'a6361dc599bac1ae7bfc633de0c35c99537c98792dc697a96f80f414806ad3ce' }
+  delegacoes: [
+    { nome: 'Bielorrússia', bandeira: 'BY', hash: 'bcf42d62b516ca25113190f01f1f4c509db599446394c9fbb71a6b0ace0f21d4' },
+    { nome: 'Brasil', bandeira: 'BR', hash: '8e4fe24e4b7b24a1d617e881190e7edda0754d77e2be0f056ad07534d6576c2b' },
+    { nome: 'Bulgária', bandeira: 'BG', hash: '79dd1182cb5fd27d976336da31a9c3f16ddfb48c2fc52017d718bf10c52deadb' },
+    { nome: 'Canadá', bandeira: 'CA', hash: 'fa262306962301823e2cc466ba0074ffc29903b9450f72c773e304b5a69d769f' },
+    { nome: 'Colômbia', bandeira: 'CO', hash: '1547453937b0a9703fc5be4cf6e260bc8bd50a674d6db8f2abc3c6b37fbc1f60' },
+    { nome: 'Cuba', bandeira: 'CU', hash: '8f9f86b322559cf4cc2b339837212a18957d43f6c079be3bb021a19711e2ee70' },
+    { nome: 'Egito', bandeira: 'EG', hash: '75db8ff4d44605581a866951d8395c1b96b49a8053d901cae2f69834c0cf514b' },
+    { nome: 'Equador', bandeira: 'EC', hash: '46157d984c19d79c99cea25dafb2eecfee8e32302be17be2efa75924ee00d0c7' },
+    { nome: 'Estados Unidos', bandeira: 'US', hash: 'd62b95bb5bf6f786341fbcfd281fb2b967ac080a0b5bb1413ad31c1fce925de5' },
+    { nome: 'Filipinas', bandeira: 'PH', hash: 'bfd1559e6b58de2331e0513d75ff81763c4c57bd08d66d11a0190cd7d1b32531' },
+    { nome: 'França', bandeira: 'FR', hash: '6ccef04f0db0753cc404dc56b867be79f9c8fa753e277b6c34e5288287b3c4e5' },
+    { nome: 'Índia', bandeira: 'IN', hash: '70301c402e1ebe3d33b77c6e1c0da9c6ccc34542bff85efd02a6d4ec4f78814c' },
+    { nome: 'Iugoslávia', bandeira: '⭐', hash: '0397bb8e65f02070e1afae4059fe014a914dd298a71759908d0cb2340cb34940' },
+    { nome: 'México', bandeira: 'MX', hash: '3a69fb4a29285371f1684ec60e410e20beec05ce16442d95bdb81cd1274835b5' },
+    { nome: 'Noruega', bandeira: 'NO', hash: '1994e279e593b703db8f7fea8cd3cd03ea23bfa77354d2f67caee484a4d0c18c' },
+    { nome: 'Polônia', bandeira: 'PL', hash: '2083b67bf4ebd731631573ab10bdcdba26dd374de1b184be975b4fd4b5ab0f45' },
+    { nome: 'Reino Unido', bandeira: 'GB', hash: '669e01af0cad3dedd0b5b4d4a76a19d541529baff7bde16dbc7563f6e19a9338' },
+    { nome: 'Romênia', bandeira: 'RO', hash: '56b7f480042b06c64dfde37ab79a2b82b24e1c4375204c5a330ee705106b7c01' },
+    { nome: 'Síria', bandeira: 'SY', hash: '6b53ddf83c7dadfc59f3e54bbaf3ce84a9c964efd814e30f606e34d90b969bf7' },
+    { nome: 'Suécia', bandeira: 'SE', hash: '28f6448e0faa074dc94b18ca32cc5132f1c20c9a4358c2d5337f09daf9443171' },
+    { nome: 'Taiwan', bandeira: 'TW', hash: '3a7ba2b8a056438a60e67b271258972af9c91e54bb2a80756953f2159e788afb' },
+    { nome: 'Tchecoslováquia', bandeira: 'CZ', hash: '08ed6474ff38fb1e7bf9554f5aa3f8f2d6c27602baac966ac75c9b2e5aa15fea' },
+    { nome: 'Turquia', bandeira: 'TR', hash: 'eb921766e948ef163dc2ac4319520544c5b633f3ee477d25f5d5b593d1542060' },
+    { nome: 'Ucrânia', bandeira: 'UA', hash: '2351f01ec78be433d6d037ecd0ee9f09abfdf6e5ab501980494d5e97558d6170' },
+    { nome: 'URSS', bandeira: '🔴', hash: '42728de59be409c87b3260927ae7c8abbd6b03545a48c626007c695f3de4757a' }
   ],
 
 // Substitua o bloco "delegacoes" do arquivo assets/js/config.js por este.

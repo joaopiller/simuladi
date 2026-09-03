@@ -53,7 +53,7 @@
       ? resto.map((e, i) => `
           <li class="fila__item">
             <span class="fila__n">${i + 2}</span>
-            <span class="flag" style="font-size:20px">${UI.bandeira(e.iso)}</span>
+            <span class="flag" style="font-size:20px">${UI.bandeira(e.bandeira)}</span>
             <span class="fila__nome">${e.delegacao}</span>
             <button class="fila__x" data-remover="${e.key}" title="Remover da fila" aria-label="Remover ${e.delegacao}">×</button>
           </li>`).join('')
@@ -77,7 +77,7 @@
             <span class="pedido__tag tag--${p.categoria}">${p.titulo}</span>
             <span class="pedido__texto">${p.opcao}</span>
             <span class="pedido__quem" title="${p.solicitantes.map(s => s.nome).join(', ')}">
-              ${p.solicitantes.map(s => `<span class="pedido__flag">${UI.bandeira(s.iso)}</span>`).join('')}
+              ${p.solicitantes.map(s => `<span class="pedido__flag">${UI.bandeira(s.bandeira)}</span>`).join('')}
             </span>
             <button class="pedido__x" data-remover-pedido="${p.chave}" title="Remover questão"
                     aria-label="Remover ${p.opcao}">×</button>
