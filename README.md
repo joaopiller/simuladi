@@ -34,7 +34,7 @@ O site precisa ser servido por HTTP — abrir o arquivo direto com duplo clique
 quebra a validação de senha (o `crypto.subtle` só funciona em `http://localhost` ou `https://`).
 
 ```bash
-cd ~/Desktop/simuladi && python3 -m http.server 8000
+cd ~/Projetos/simuladi && python3 -m http.server 8000
 ```
 
 Depois abra `http://localhost:8000` no navegador.
@@ -122,7 +122,7 @@ fora do ar, o site volta para o modo local em vez de quebrar.
 Instale o Git (se ainda não tiver) e rode, dentro da pasta do projeto:
 
 ```bash
-cd ~/Desktop/simuladi
+cd ~/Projetos/simuladi
 git init -b main
 git add .
 git commit -m "Primeira versão do SimuLADI"
@@ -173,7 +173,7 @@ de entender.
 Rode isto na pasta do projeto antes de publicar:
 
 ```bash
-cd ~/Desktop/simuladi && V=$(date +%Y%m%d%H%M) && sed -i '' -E "s|(assets/(css\|js)/[a-z]+\.[a-z]+)\?v=[0-9]*|\1?v=$V|g" index.html */index.html && echo "versão dos arquivos atualizada para $V"
+cd ~/Projetos/simuladi && V=$(date +%Y%m%d%H%M) && sed -i '' -E "s|(assets/(css\|js)/[a-z]+\.[a-z]+)\?v=[0-9]*|\1?v=$V|g" index.html */index.html && echo "versão dos arquivos atualizada para $V"
 ```
 
 Se mesmo assim alguém estiver vendo a versão antiga, um recarregamento forçado

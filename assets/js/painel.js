@@ -111,8 +111,14 @@
   });
 
   $('#mesaOk').addEventListener('click', async () => {
-    const ok = await UI.conferirSenha(
-      { senha: Config.senhaMesa, hash: Config.hashMesa }, $('#senhaMesa').value);
+    let ok = false;
+    try {
+      ok = await UI.conferirSenha(
+        { senha: Config.senhaMesa, hash: Config.hashMesa }, $('#senhaMesa').value);
+    } catch (e) {
+      UI.aviso('Não foi possível verificar a senha. Recarregue a página e tente de novo.', true);
+      return;
+    }
     if (ok) ligarMesa();
     else { UI.aviso('Senha da mesa incorreta.', true); $('#senhaMesa').value = ''; }
   });

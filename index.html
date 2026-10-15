@@ -7,9 +7,9 @@
 <title>SimuLADI — Pedido de fala</title>
 <link rel="icon" type="image/png" href="assets/img/favicon.png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
-<link rel="stylesheet" href="assets/css/style.css?v=202609011927">
-<script src="assets/js/config.js?v=202609011927"></script>
-<script src="assets/js/ui.js?v=202609011927"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=202610151505">
+<script src="assets/js/config.js?v=202610151505"></script>
+<script src="assets/js/ui.js?v=202610151505"></script>
 </head>
 <body>
 <div class="bg"></div>
@@ -149,7 +149,18 @@
     const btn = $('#btnEntrar');
     btn.disabled = true; btn.textContent = 'Verificando…';
 
-    const ok = await UI.conferirSenha(escolhida, senha);
+    /* Se a conferência falhar por qualquer motivo, o botão precisa voltar ao
+       normal com uma mensagem — sem isto ele fica travado em "Verificando…"
+       e a pessoa não tem ideia do que aconteceu. */
+    let ok = false;
+    try {
+      ok = await UI.conferirSenha(escolhida, senha);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Entrar';
+      UI.aviso('Não foi possível verificar a senha. Recarregue a página e tente de novo.', true);
+      return;
+    }
+
     if (!ok) {
       btn.disabled = false; btn.textContent = 'Entrar';
       UI.aviso('Senha incorreta para ' + escolhida.nome + '.', true);
