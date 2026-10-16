@@ -18,7 +18,7 @@
      cabeçalho
      --------------------------------------------------------- */
   $('#oiDelegacao').textContent = delegacao.nome;
-  document.title = `${delegacao.nome} — SimuLADI`;
+  document.title = `${delegacao.nome} | SimuLADI`;
 
   /* ---------------------------------------------------------
      acordeões de Questão / Moção

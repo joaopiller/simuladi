@@ -163,14 +163,14 @@ const UI = {
     return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   },
 
-  /* logo: usa assets/img/logo.png; se não existir, desenha um emblema simples */
+  /* logo: usa assets/img/logo.svg; se não existir, desenha um emblema simples */
   logoFallback(img) {
     img.outerHTML = `
       <svg viewBox="0 0 100 100" role="img" aria-label="Ligas Acadêmicas de Direito Internacional da UFF e da UNIRIO">
-        <circle cx="50" cy="50" r="47" fill="#1e5aa8"/>
+        <circle cx="50" cy="50" r="47" fill="var(--ladi-azul,#004AAD)"/>
         <circle cx="50" cy="50" r="47" fill="none" stroke="#fff" stroke-width="2.5"/>
         <circle cx="50" cy="50" r="38" fill="none" stroke="#fff" stroke-width="1.2" opacity=".75"/>
-        <circle cx="50" cy="50" r="27" fill="#2f7fd4"/>
+        <circle cx="50" cy="50" r="27" fill="var(--ladi-claro,#4C91D4)"/>
         <g fill="none" stroke="#fff" stroke-width="1.6" opacity=".95">
           <circle cx="50" cy="50" r="27"/>
           <path d="M23 50h54M50 23c9 8 9 46 0 54M50 23c-9 8-9 46 0 54"/>

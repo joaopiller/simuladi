@@ -2,34 +2,36 @@
    SimuLADI — estilos
    ============================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400;1,700&display=swap');
 
 :root{
-  /* ---------- PALETA DO FUNDO ----------
-     Para trocar o clima do site, mude só estas 5 linhas.
-     Alternativa "madeira quente" (mais parecida com o mockup original):
-       --bg:#14100c; --bg-deep:#070503;
-       --glow-topo:rgba(126,92,52,.55); --glow-base:rgba(224,185,106,.20); --glow-lado:rgba(126,92,52,.24);
-     Alternativa "verde diplomático":
-       --bg:#0b1614; --bg-deep:#050b0a;
-       --glow-topo:rgba(42,120,104,.45); --glow-base:rgba(219,171,92,.18); --glow-lado:rgba(42,120,104,.22);
-     ------------------------------------- */
-  --bg:#0c1119;
-  --bg-deep:#05080d;
-  --glow-topo:rgba(48,102,180,.72);
-  --glow-base:rgba(152,182,222,.24);
-  --glow-lado:rgba(40,84,150,.42);
+  /* ---------- IDENTIDADE LADI ----------
+     Cores tiradas do site da Liga (joaopiller.github.io/ladi-uff).
+     Mexa aqui para mudar o clima do site inteiro. */
+  --ladi-azul:#004AAD;      /* azul da marca */
+  --ladi-ceu:#85CFFE;       /* azul-céu, usado nos rótulos */
+  --ladi-claro:#4C91D4;
+  --ladi-medio:#3A75C8;
+  --ladi-escuro:#274359;
+  --ladi-gelo:#C8E0EF;
+
+  /* ---------- PALETA DO FUNDO ---------- */
+  --bg:#0d1b2a;
+  --bg-deep:#060f1a;
+  --glow-topo:rgba(0,74,173,.72);
+  --glow-base:rgba(133,207,254,.22);
+  --glow-lado:rgba(58,117,200,.42);
 
   --paper:#ffffff;
-  --ink:#1b1712;
-  --ink-soft:#6d635a;
-  --ink-faint:#a49a90;
+  --ink:#274359;
+  --ink-soft:#5d6b7a;
+  --ink-faint:#93a3b3;
 
-  --tan:#8e9bab;          /* setinha dos campos */
-  --realce:#e2e9f2;       /* realce claro sobre fundo escuro */
-  --realce-2:#2b3f5c;     /* realce escuro sobre fundo claro */
-  --foco:#6f9fd8;         /* anel de foco do teclado */
-  --blue:#3b7cc4;
+  --tan:#7f96ad;          /* setinha dos campos */
+  --realce:#C8E0EF;       /* realce claro sobre fundo escuro */
+  --realce-2:#274359;     /* realce escuro sobre fundo claro */
+  --foco:#85CFFE;         /* anel de foco do teclado */
+  --blue:#004AAD;
   --green:#5cb489;
   --red:#dd6a56;
 
@@ -37,8 +39,8 @@
   --veil:rgba(255,255,255,.07);
 
   --r-pill:999px;
-  --r-card:22px;
-  --r-soft:14px;
+  --r-card:20px;
+  --r-soft:12px;
 
   --sh-lift:0 10px 30px rgba(0,0,0,.35);
   --sh-pop:0 24px 60px rgba(0,0,0,.5);
@@ -59,13 +61,13 @@ html{
   /* Cor que aparece quando o celular "estica" a rolagem além do fim da página.
      Sem isto, o iOS mostra o preto do fundo do documento como uma barra no topo
      ou embaixo. O tom fica entre o topo e a base do degradê, para não destoar. */
-  background:#0a0e15;
+  background:#0a1623;
   overscroll-behavior:none;   /* corta o efeito elástico que revela essa faixa */
 }
 
 body{
   margin:0;
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-family:'Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   color:#fff;
   background:transparent;
   -webkit-font-smoothing:antialiased;
@@ -141,12 +143,13 @@ body{
 .brand__mark{ width:68px; height:68px; flex:none; display:block; }
 .brand__mark img,.brand__mark svg{ width:100%; height:100%; display:block; object-fit:contain; }
 .brand__name{
-  font-family:'Outfit',sans-serif; font-weight:600; font-size:40px;
-  line-height:1; letter-spacing:-.022em; margin:0;
+  font-family:'Oswald',sans-serif; font-weight:600; font-size:40px;
+  line-height:1; letter-spacing:.012em; margin:0;
 }
+.brand__name .ladi{ color:var(--ladi-ceu); }
 .brand__name sup{ font-size:.42em; font-weight:400; top:-.9em; }
 .brand__sub{
-  font-family:'Outfit',sans-serif; font-weight:200; font-size:23px;
+  font-family:'Oswald',sans-serif; font-weight:200; font-size:23px;
   line-height:1.1; margin:2px 0 0; color:rgba(255,255,255,.94);
 }
 .brand--sm{ margin-bottom:20px; gap:12px; }
@@ -163,12 +166,12 @@ body{
 .lede b,.lede strong{ font-weight:700; }
 
 .h-hello{
-  font-family:'Outfit',sans-serif; font-weight:400; font-size:27px;
-  text-align:center; margin:0 0 18px; letter-spacing:-.01em; text-wrap:balance;
+  font-family:'Oswald',sans-serif; font-weight:400; font-size:27px;
+  text-align:center; margin:0 0 18px; letter-spacing:.006em; text-wrap:balance;
 }
 .h-hello b{ font-weight:600; }
 .h-ask{
-  font-family:'Outfit',sans-serif; font-weight:600;
+  font-family:'Oswald',sans-serif; font-weight:600;
   font-size:24px; text-align:center; margin:0 0 26px;
 }
 .h-cta{
@@ -213,7 +216,7 @@ body{
 
 input.pill{ box-shadow:var(--sh-lift); }
 input.pill::placeholder{ color:var(--ink-faint); font-style:italic; opacity:1; }
-input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159,216,.6); }
+input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207,254,.65); }
 
 .inputwrap{ position:relative; }
 .inputwrap .pill{ padding-right:58px; }
@@ -260,7 +263,7 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159
 .btn[disabled]:active{ transform:none; }
 
 .btn--primary{ background:var(--paper); color:var(--ink); }
-.btn--realce{ background:var(--realce); color:#14202f; }
+.btn--realce{ background:var(--realce); color:var(--ladi-escuro); }
 .btn--ghost{
   background:transparent; color:#fff; box-shadow:none;
   border:1.5px solid var(--hair); font-weight:600; font-size:16px; min-height:50px;
@@ -330,34 +333,34 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159
 }
 .card__title{
   font-size:11.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
-  color:rgba(255,255,255,.55); margin:0 0 12px;
+  color:rgba(133,207,254,.78); margin:0 0 12px;
 }
 
 .turn{
   text-align:center; padding:30px 22px;
   border-radius:var(--r-card);
-  border:1.5px solid rgba(226,233,242,.38);
-  background:linear-gradient(180deg, rgba(226,233,242,.16), rgba(226,233,242,.04));
+  border:1.5px solid rgba(200,224,239,.38);
+  background:linear-gradient(180deg, rgba(200,224,239,.16), rgba(200,224,239,.04));
   animation:glow 2.6s ease-in-out infinite;
 }
 @keyframes glow{
-  0%,100%{ box-shadow:0 0 0 0 rgba(226,233,242,.24); }
-  50%    { box-shadow:0 0 0 16px rgba(226,233,242,0); }
+  0%,100%{ box-shadow:0 0 0 0 rgba(200,224,239,.24); }
+  50%    { box-shadow:0 0 0 16px rgba(200,224,239,0); }
 }
-.turn__kicker{ font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:rgba(226,233,242,.78); margin:0 0 8px; }
-.turn__title{ font-family:'Outfit',sans-serif; font-weight:700; font-size:34px; line-height:1.1; margin:0 0 12px; }
+.turn__kicker{ font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:rgba(133,207,254,.9); margin:0 0 8px; }
+.turn__title{ font-family:'Oswald',sans-serif; font-weight:700; font-size:34px; line-height:1.1; margin:0 0 12px; }
 .turn__what{ font-size:16px; line-height:1.45; color:rgba(255,255,255,.92); margin:0; }
 
 .wait{ text-align:center; padding:26px 22px; }
 .wait__pos{
-  font-family:'Outfit',sans-serif; font-weight:600;
-  font-size:76px; line-height:1; letter-spacing:-.04em;
+  font-family:'Oswald',sans-serif; font-weight:600;
+  font-size:76px; line-height:1; letter-spacing:0;
   background:linear-gradient(180deg,#fff,rgba(255,255,255,.55));
   -webkit-background-clip:text; background-clip:text; color:transparent;
   margin:0;
 }
-.wait__label{ font-size:13px; letter-spacing:.13em; text-transform:uppercase; color:rgba(255,255,255,.6); margin:2px 0 14px; font-weight:600; }
-.wait__title{ font-family:'Outfit',sans-serif; font-weight:500; font-size:23px; margin:0 0 6px; }
+.wait__label{ font-size:13px; letter-spacing:.13em; text-transform:uppercase; color:rgba(133,207,254,.75); margin:2px 0 14px; font-weight:600; }
+.wait__title{ font-family:'Oswald',sans-serif; font-weight:500; font-size:23px; margin:0 0 6px; }
 .wait__what{ font-size:15px; color:rgba(255,255,255,.75); margin:0; }
 
 .empty{ text-align:center; color:rgba(255,255,255,.5); font-size:14.5px; font-style:italic; padding:22px 10px; }
@@ -407,7 +410,7 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159
   .sheet__box{ border-radius:26px; }
 }
 .sheet__grab{ width:42px; height:4px; border-radius:99px; background:rgba(255,255,255,.24); margin:4px auto 12px; flex:none; }
-.sheet__title{ font-family:'Outfit',sans-serif; font-weight:600; font-size:20px; margin:0 0 4px; text-align:center; }
+.sheet__title{ font-family:'Oswald',sans-serif; font-weight:600; font-size:20px; margin:0 0 4px; text-align:center; }
 .sheet__desc{ font-size:14.5px; color:rgba(255,255,255,.7); margin:0 0 16px; text-align:center; line-height:1.5; }
 .sheet__list{ overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -4px; padding:2px 4px 4px; flex:1; }
 .sheet__actions{ display:flex; gap:10px; padding-top:6px; flex:none; }
@@ -430,15 +433,15 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159
 }
 .pickitem:hover{ background:rgba(255,255,255,.1); }
 .pickitem:focus-visible{ outline:2px solid var(--foco); outline-offset:1px; }
-.pickitem[aria-selected="true"]{ border-color:rgba(226,233,242,.5); background:rgba(226,233,242,.13); }
+.pickitem[aria-selected="true"]{ border-color:rgba(200,224,239,.5); background:rgba(200,224,239,.13); }
 
 .recap{
   display:flex; align-items:center; gap:12px;
   padding:16px; border-radius:var(--r-soft);
-  background:rgba(226,233,242,.10); border:1px solid rgba(226,233,242,.28);
+  background:rgba(200,224,239,.10); border:1px solid rgba(200,224,239,.28);
   margin-bottom:16px;
 }
-.recap__k{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:rgba(226,233,242,.8); font-weight:700; }
+.recap__k{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:rgba(200,224,239,.8); font-weight:700; }
 .recap__v{ font-size:16.5px; font-weight:600; line-height:1.35; margin-top:3px; }
 
 /* ============================ avisos ============================ */
@@ -457,7 +460,7 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159
 .banner{
   width:var(--col); margin:0 auto 14px;
   padding:11px 15px; border-radius:var(--r-soft);
-  background:rgba(226,233,242,.10); border:1px solid rgba(226,233,242,.26);
+  background:rgba(200,224,239,.10); border:1px solid rgba(200,224,239,.26);
   font-size:13px; line-height:1.5; color:#dbe4ef;
 }
 .banner--erro{
@@ -503,7 +506,7 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(111,159
 .qr__fechar:focus-visible{ outline:2px solid var(--foco); outline-offset:2px; }
 
 .qr__titulo{
-  margin:0; font-family:'Outfit',sans-serif; font-weight:500;
+  margin:0; font-family:'Oswald',sans-serif; font-weight:500;
   font-size:clamp(17px,2.2vh,24px); text-align:center;
 }
 .qr__papel{
@@ -563,15 +566,15 @@ body.painel{ overflow:hidden; }
 
 .col__titulo{
   font-size:12.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
-  color:rgba(255,255,255,.5); margin:0 0 12px;
+  color:rgba(133,207,254,.78); margin:0 0 12px;
 }
 
 .now{
   /* ocupa a coluna inteira, para terminar na mesma linha da lista de questões */
   height:100%; overflow:auto;
   border-radius:30px; padding:clamp(26px,4vw,54px);
-  border:1.5px solid rgba(226,233,242,.32);
-  background:linear-gradient(150deg, rgba(226,233,242,.13), rgba(226,233,242,.02));
+  border:1.5px solid rgba(200,224,239,.32);
+  background:linear-gradient(150deg, rgba(200,224,239,.13), rgba(200,224,239,.02));
   /* três zonas fixas: rótulo em cima, país no centro, tempo e ação embaixo —
      assim os elementos ficam no mesmo lugar independente da altura da tela */
   display:flex; flex-direction:column; justify-content:space-between; gap:16px;
@@ -583,10 +586,10 @@ body.painel{ overflow:hidden; }
 .now__base{
   display:flex; align-items:center; gap:clamp(14px,1.6vw,24px); flex-wrap:wrap;
 }
-.now__kicker{ font-size:clamp(12px,1.1vw,15px); font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:rgba(226,233,242,.72); margin:0 0 14px; }
+.now__kicker{ font-size:clamp(12px,1.1vw,15px); font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:rgba(133,207,254,.85); margin:0 0 14px; }
 .now__name{
-  font-family:'Outfit',sans-serif; font-weight:600;
-  font-size:clamp(40px,7vw,104px); line-height:1.02; letter-spacing:-.03em; margin:0;
+  font-family:'Oswald',sans-serif; font-weight:600;
+  font-size:clamp(40px,7vw,104px); line-height:1.02; letter-spacing:.006em; margin:0;
   text-wrap:balance;
 }
 /* três degraus conforme o comprimento do nome da delegação */
@@ -677,7 +680,7 @@ body.mesa-on .pedido__x{ display:block; }
 }
 .fila__n{
   flex:none; width:24px; height:24px; border-radius:50%; display:grid; place-items:center;
-  font-family:'Outfit',sans-serif; font-weight:600; font-size:13px;
+  font-family:'Oswald',sans-serif; font-weight:600; font-size:13px;
   background:rgba(255,255,255,.13);
 }
 .fila__nome{ font-size:clamp(14px,1.2vw,17px); font-weight:600; white-space:nowrap; }
