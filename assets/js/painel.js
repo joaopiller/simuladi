@@ -48,7 +48,6 @@
          </div>`;
 
     const resto = fila.slice(1);
-    $('#qtd').textContent = resto.length;
     $('#proximos').innerHTML = resto.length
       ? resto.map((e, i) => `
           <li class="fila__item">
@@ -70,15 +69,13 @@
     if (nova === assinaturaPedidos) return;
     assinaturaPedidos = nova;
 
-    $('#qtdPedidos').textContent = lista.length;
     $('#listaPedidos').innerHTML = lista.length
       ? lista.map(p => `
           <li class="pedido">
-            <span class="pedido__tag tag--${p.categoria}">${p.titulo}</span>
             <span class="pedido__texto">${p.opcao}</span>
-            <span class="pedido__quem" title="${p.solicitantes.map(s => s.nome).join(', ')}">
-              ${p.solicitantes.map(s => `<span class="pedido__flag">${UI.bandeira(s.bandeira)}</span>`).join('')}
-            </span>
+            <span class="pedido__quem">${p.solicitantes
+                .map(s => `<span class="pedido__pais">${s.nome}</span>`)
+                .join('<span class="pedido__sep" aria-hidden="true">,</span>')}</span>
             <button class="pedido__x" data-remover-pedido="${p.chave}" title="Remover questão"
                     aria-label="Remover ${p.opcao}">×</button>
           </li>`).join('')
@@ -97,13 +94,24 @@
     document.body.classList.add('mesa-on');
     $('#btnLimpar').hidden = false;
     $('#btnLimparPedidos').hidden = false;
-    $('#btnMesa').textContent = 'Mesa liberada';
-    $('#btnMesa').disabled = true;
+    $('#btnMesa').textContent = 'Sair da mesa';
     UI.fechar(sheet);
     UI.aviso('Modo mesa liberado.');
   }
 
+  /* Sair devolve a tela ao estado de projeção. Como "mesa" volta a ser falso,
+     o próximo clique cai de novo na folha de senha — reentrar exige digitá-la. */
+  function desligarMesa() {
+    mesa = false;
+    document.body.classList.remove('mesa-on');
+    $('#btnLimpar').hidden = true;
+    $('#btnLimparPedidos').hidden = true;
+    $('#btnMesa').textContent = 'Modo mesa';
+    UI.aviso('Modo mesa encerrado.');
+  }
+
   $('#btnMesa').addEventListener('click', () => {
+    if (mesa) { desligarMesa(); return; }
     if (!Config.senhaMesa && !Config.hashMesa) { ligarMesa(); return; }
     $('#senhaMesa').value = '';
     UI.abrir(sheet);

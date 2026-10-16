@@ -643,25 +643,29 @@ body.mesa-on .now__x{ display:block; }
   flex:1; min-height:0; overflow-y:auto;
 }
 .pedido{
+  /* o × da mesa fica na coluna da direita e ocupa as duas linhas */
   display:grid; gap:3px 10px; align-items:center;
-  grid-template-columns:auto 1fr auto;
-  grid-template-areas:'tag quem x' 'texto texto texto';
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:'texto x' 'quem x';
   padding:11px 13px; border-radius:14px;
   background:rgba(255,255,255,.06); border:1px solid var(--hair);
   animation:rowIn .3s var(--ease) both;
 }
-.pedido__tag{
-  grid-area:tag; justify-self:start;
-  font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
-  padding:3px 8px; border-radius:var(--r-pill);
-}
 .pedido__texto{
   grid-area:texto; font-size:clamp(13.5px,1.15vw,16px); font-weight:600; line-height:1.3;
 }
-.pedido__quem{ grid-area:quem; justify-self:end; display:flex; flex-wrap:wrap; gap:2px; }
-.pedido__flag{ font-size:14px; line-height:1; }
+/* quem pediu: nomes em linha, quebrando sozinho quando forem muitos */
+.pedido__quem{
+  grid-area:quem; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 5px;
+  font-size:clamp(11.5px,.95vw,13.5px); line-height:1.4;
+  color:rgba(255,255,255,.6);
+}
+/* a vírgula cola no nome anterior: o -6px anula o gap da esquerda,
+   e o gap da direita vira o espaço depois dela */
+.pedido__sep{ color:rgba(255,255,255,.45); margin-left:-5px; }
 .pedido__x{
-  grid-area:x; width:24px; height:24px; border-radius:50%; display:none; flex:none;
+  grid-area:x; align-self:center;
+  width:24px; height:24px; border-radius:50%; display:none; flex:none;
   background:rgba(221,106,86,.18); border:1px solid rgba(221,106,86,.45);
   color:#ffb9ac; font-size:13px; line-height:1; cursor:pointer;
 }
