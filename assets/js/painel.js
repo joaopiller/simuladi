@@ -8,7 +8,6 @@
   let desde = 0;         // quando assumiu a palavra
   let mesa  = false;
 
-  $('#rodapeInfo').textContent = Config.organizacao;
 
   /* ---------------------------------------------------------
      desenho

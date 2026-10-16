@@ -173,7 +173,7 @@ de entender.
 Rode isto na pasta do projeto antes de publicar:
 
 ```bash
-cd ~/Projetos/simuladi && V=$(date +%Y%m%d%H%M) && sed -i '' -E "s|(assets/(css\|js)/[a-z]+\.[a-z]+)\?v=[0-9]*|\1?v=$V|g" index.html */index.html && echo "versão dos arquivos atualizada para $V"
+cd ~/Projetos/simuladi && V=$(date +%Y%m%d%H%M) && sed -i '' -E "s|(assets/(css\|js)/[a-z]+\.[a-z]+\|img/(favicon\|apple-touch-icon)\.png)(\?v=[0-9]*)?|\1?v=$V|g" index.html */index.html && echo "versão dos arquivos atualizada para $V"
 ```
 
 Se mesmo assim alguém estiver vendo a versão antiga, um recarregamento forçado
