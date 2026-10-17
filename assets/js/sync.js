@@ -30,6 +30,7 @@ const Sync = (() => {
   let minhaRef  = null;   // firebase
   let minhaKey  = null;
   let pulso     = null;
+  let jaDespediu = false;   // evita mandar o DELETE duas vezes (pagehide + beforeunload)
 
   /* chave estável a partir do texto, para a mesma questão não duplicar */
   const chaveDe = txt => txt.normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -203,6 +204,23 @@ const Sync = (() => {
       minhaRef = null; minhaKey = null;
     },
 
+    /* Saída usada quando a página está sendo descartada (voltar, fechar a aba).
+       O SDK não consegue mais concluir um envio nesse ponto, então vai um
+       DELETE pela API REST com keepalive — o navegador se compromete a
+       entregá-lo mesmo com a página morrendo.
+       O onDisconnect fica armado de propósito: se este envio falhar, o
+       servidor ainda apaga a inscrição sozinho. */
+    despedirAgora() {
+      if (!minhaKey || jaDespediu) return;
+      jaDespediu = true;
+      const base = String(Config.firebase.databaseURL || '').replace(/\/+$/, '');
+      if (!base) return;
+      try {
+        fetch(`${base}/salas/${SALA}/fila/${minhaKey}.json`,
+              { method: 'DELETE', keepalive: true });
+      } catch (e) {}
+    },
+
     remover(key) { return refFila.child(key).remove(); },
     limpar()     { return refFila.remove(); },
 
@@ -259,11 +277,16 @@ const Sync = (() => {
       // No modo local não há servidor, então a limpeza tem que ser feita aqui
       // mesmo; localStorage é síncrono e dá tempo de gravar.
       const despedir = () => {
-        if (modo === 'firebase') return;
+        // O onDisconnect sozinho não basta: ao voltar a página, o celular
+        // CONGELA a aba em cache em vez de fechar a conexão, e a delegação
+        // continuava na fila. Veja despedirAgora() acima.
+        if (modo === 'firebase') { fbAPI.despedirAgora(); return; }
         try { localAPI.sair(); } catch (e) {}
       };
       window.addEventListener('pagehide', despedir);
       window.addEventListener('beforeunload', despedir);
+      // a página pode voltar do cache do navegador: rearma para a próxima saída
+      window.addEventListener('pageshow', () => { jaDespediu = false; });
       return this;
     },
 
