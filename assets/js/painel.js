@@ -8,6 +8,9 @@
   let desde = 0;         // quando assumiu a palavra
   let mesa  = false;
 
+  /* a marca leva de volta ao início, carregando a sala atual junto */
+  $('#linkInicio').href = UI.href();
+
 
   /* ---------------------------------------------------------
      desenho
