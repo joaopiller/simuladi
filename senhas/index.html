@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SimuLADI | Gerador de senhas</title>
-<link rel="icon" type="image/png" href="../assets/img/favicon.png?v=202610151814">
-<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png?v=202610151814">
-<link rel="stylesheet" href="../assets/css/style.css?v=202610151814">
+<link rel="icon" type="image/png" href="../assets/img/favicon.png?v=202610151815">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png?v=202610151815">
+<link rel="stylesheet" href="../assets/css/style.css?v=202610151815">
 <style>
   .painel-wrap{ grid-template-rows:auto auto 1fr; }
   .saida{
@@ -19,8 +19,8 @@
   .linha .btn{ width:auto; min-height:46px; font-size:15px; }
   .aviso-box{ max-width:820px; }
 </style>
-<script src="../assets/js/config.js?v=202610151814"></script>
-<script src="../assets/js/ui.js?v=202610151814"></script>
+<script src="../assets/js/config.js?v=202610151815"></script>
+<script src="../assets/js/ui.js?v=202610151815"></script>
 </head>
 <body data-raiz="../">
 <div class="bg"></div>
@@ -91,7 +91,7 @@
       dados.map(d =>
         `    { nome: '${d.nome.replace(/'/g, "\\'")}', bandeira: '${d.bandeira}', hash: '${d.hash}' }`
       ).join(',\n') +
-      '\n  ],\n\n// Substitua o bloco "delegacoes" do arquivo assets/js/config.js?v=202610151814 por este.';
+      '\n  ],\n\n// Substitua o bloco "delegacoes" do arquivo assets/js/config.js?v=202610151815 por este.';
   }
 
   function verLista() {
@@ -110,7 +110,7 @@
     $('#saida').value =
       `  senhaMesa: '',\n` +
       `  hashMesa: '${hash}',\n\n` +
-      `// Substitua as duas linhas correspondentes em assets/js/config.js?v=202610151814.\n` +
+      `// Substitua as duas linhas correspondentes em assets/js/config.js?v=202610151815.\n` +
       `// Guarde a senha "${senha}" com a mesa — ela não pode ser recuperada a partir do hash.`;
     UI.aviso('Hash da mesa gerado.');
   });
