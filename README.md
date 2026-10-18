@@ -252,9 +252,13 @@ do banco.
   Para forçar outro endereço (um link curto, por exemplo), preencha `enderecoPublico`
   em `config.js`.
 - Ao clicar em **Terminei de falar**, a delegação sai e a próxima assume na hora.
-- **Fechar o navegador remove o pedido automaticamente.** No modo Firebase isso é
-  feito pelo servidor (`onDisconnect`), então funciona mesmo se o celular travar ou
-  ficar sem bateria. No modo local, o pedido some após ~15 segundos sem sinal de vida.
+- **Sair da página remove o pedido automaticamente**: fechar a aba, voltar, navegar
+  para fora ou recarregar.
+- **Apagar a tela do celular NÃO tira ninguém da fila.** A delegação segue inscrita,
+  mesmo com o aparelho bloqueado por muito tempo — perder o lugar sem ter feito nada
+  seria pior do que qualquer ganho de limpeza automática.
+- Em compensação, se o navegador morrer sem avisar (pane, bateria acabando), a
+  inscrição fica na fila. A mesa remove pelo **×**, no modo mesa.
 - **Recarregar a página também tira o pedido da fila** — é o mesmo que fechar o
   navegador. A delegação precisa pedir de novo.
 - Cada delegação pode ter **um pedido por vez**.

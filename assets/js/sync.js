@@ -191,15 +191,20 @@ const Sync = (() => {
     async entrar(item) {
       minhaRef = refFila.push();
       minhaKey = minhaRef.key;
-      // o servidor apaga sozinho se o navegador fechar / cair a conexão
-      await minhaRef.onDisconnect().remove();
+      /* NÃO registramos onDisconnect aqui, de propósito.
+         Ele manda o servidor apagar a inscrição sempre que a conexão cai —
+         inclusive quando o celular só APAGA A TELA e o sistema suspende o
+         navegador. A pessoa perderia o lugar na fila sem ter feito nada, e
+         sem como perceber. Sair da fila é sempre explícito: os botões, a
+         troca de delegação, ou despedirAgora() ao descartar a página.
+         O preço disso: se o navegador morrer sem avisar (pane, bateria
+         acabando), a inscrição fica na fila até a mesa remover pelo ×. */
       await minhaRef.set({ ...item, ordem: firebase.database.ServerValue.TIMESTAMP });
       return minhaKey;
     },
 
     async sair() {
       if (!minhaRef) return;
-      await minhaRef.onDisconnect().cancel();
       await minhaRef.remove();
       minhaRef = null; minhaKey = null;
     },
@@ -208,8 +213,8 @@ const Sync = (() => {
        O SDK não consegue mais concluir um envio nesse ponto, então vai um
        DELETE pela API REST com keepalive — o navegador se compromete a
        entregá-lo mesmo com a página morrendo.
-       O onDisconnect fica armado de propósito: se este envio falhar, o
-       servidor ainda apaga a inscrição sozinho. */
+       É a ÚNICA remoção automática que existe — não há onDisconnect
+       registrado (veja entrar()). */
     despedirAgora() {
       if (!minhaKey || jaDespediu) return;
       jaDespediu = true;
@@ -266,20 +271,16 @@ const Sync = (() => {
         await localAPI.iniciar();
       }
 
-      // Rede de segurança ao fechar a aba.
+      // Saída da fila ao deixar a página.
       //
-      // No modo Firebase quem remove é o SERVIDOR, pelo onDisconnect registrado
-      // em entrar(). Chamar sair() aqui seria um tiro no pé: ele começa
-      // cancelando esse gatilho e só depois tenta o remove() — que quase nunca
-      // chega a ser enviado, porque a página já está sendo destruída, deixando
-      // o pedido preso na fila para sempre.
+      // Estes dois eventos só disparam quando a página está mesmo sendo
+      // descartada: navegar para fora, voltar, recarregar, fechar a aba.
+      // Apagar a tela do celular dispara apenas visibilitychange — medido —
+      // então quem está na fila ou com a palavra NÃO perde o lugar.
       //
       // No modo local não há servidor, então a limpeza tem que ser feita aqui
       // mesmo; localStorage é síncrono e dá tempo de gravar.
       const despedir = () => {
-        // O onDisconnect sozinho não basta: ao voltar a página, o celular
-        // CONGELA a aba em cache em vez de fechar a conexão, e a delegação
-        // continuava na fila. Veja despedirAgora() acima.
         if (modo === 'firebase') { fbAPI.despedirAgora(); return; }
         try { localAPI.sair(); } catch (e) {}
       };
