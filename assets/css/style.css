@@ -756,6 +756,63 @@ body.mesa-on .fila__x{ display:block; }
   .painel-foot__end .btn{ flex:1 1 auto; min-width:0; }
 }
 
+/* ============================ acabamento ============================
+   Polimento visual. Tudo aqui usa cores, raios e fontes que já existem —
+   nada muda a identidade. O bloco de prefers-reduced-motion no fim do
+   arquivo neutraliza as animações para quem pediu menos movimento.
+   ------------------------------------------------------------------ */
+
+/* --- brilho suave atrás do símbolo, para ele descolar do fundo ---
+   O ::before é pintado antes do <img>, que ganha position:relative para
+   ficar por cima. Evita z-index negativo, que escaparia para trás do
+   fundo da página. */
+.brand__mark{ position:relative; }
+.brand__mark::before{
+  content:''; position:absolute; inset:-32%; border-radius:50%;
+  background:radial-gradient(circle, rgba(133,207,254,.20) 0%, transparent 70%);
+  pointer-events:none;
+}
+.brand__mark img,.brand__mark svg{ position:relative; }
+
+/* --- entrada da tela de login, um elemento depois do outro ---
+   Os atrasos são curtos de propósito: a página precisa parecer pronta,
+   não encenada. Do primeiro ao último dá menos de meio segundo. */
+@keyframes sobe{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+
+.pagina-entrada .brand,
+.pagina-entrada .lede,
+.pagina-entrada .field,
+.pagina-entrada .fineprint,
+.pagina-entrada #btnEntrar,
+.pagina-entrada #btnPainel{ animation:sobe .42s var(--ease) both; }
+
+.pagina-entrada .brand    { animation-delay:.02s; }
+.pagina-entrada .lede     { animation-delay:.06s; }
+.pagina-entrada .field    { animation-delay:.11s; }
+.pagina-entrada .inputwrap{ animation-delay:.15s; }   /* é o 2º campo */
+.pagina-entrada .fineprint{ animation-delay:.19s; }
+.pagina-entrada #btnEntrar{ animation-delay:.23s; }
+.pagina-entrada #btnPainel{ animation-delay:.27s; }
+
+/* --- lista de delegações ---
+   A lista é longa e era cortada na reta em cima e embaixo; a máscara faz
+   o conteúdo desvanecer nas pontas, deixando claro que há mais rolagem. */
+.sheet__list{
+  -webkit-mask-image:linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+          mask-image:linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+}
+/* as bandeiras são emojis de larguras diferentes: a coluna fixa alinha os nomes */
+.pickitem .flag{ width:30px; display:grid; place-items:center; }
+.pickitem{ transition:background .16s var(--ease), border-color .16s var(--ease), transform .16s var(--ease); }
+.pickitem:hover{ background:rgba(255,255,255,.12); transform:translateX(3px); }
+
+/* --- botões e campos respondem ao ponteiro --- */
+.btn:hover:not([disabled]){ transform:translateY(-1px); }
+.pill:hover{ box-shadow:var(--sh-lift), 0 0 0 1px rgba(133,207,254,.35); }
+
+/* --- número da posição na fila, no azul-céu da marca --- */
+.fila__n{ background:rgba(133,207,254,.18); color:var(--ladi-ceu); }
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{ animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
 }
