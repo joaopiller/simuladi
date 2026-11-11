@@ -1,14 +1,15 @@
 /* =============================================================
    SimuLADI — sincronização
 
-   São DUAS listas independentes:
+   Uma fila só, por ordem de chegada. Cada entrada é um pedido de fala de
+   um país, de um destes tipos:
 
-   • fila     — os países que pediram a palavra, por ordem de chegada.
-                Sai sozinha quando o navegador fecha.
-   • pedidos  — as questões e moções solicitadas. NÃO saem quando o país
-                sai da fila: só a mesa diretora remove. Uma mesma questão
-                pedida por vários países aparece uma vez só, guardando
-                quem solicitou.
+   • orador  — inscrição na lista de oradores (sem "categoria")
+   • questão — categoria "questao", com o tema em "opcao"
+   • moção   — categoria "mocao", com o tema em "opcao"
+
+   Quem está em primeiro tem a palavra, seja qual for o tipo. A tela de
+   projeção só separa a exibição em duas listas; a ordem é uma só.
 
    Dois modos, mesma interface:
      • local    -> localStorage + BroadcastChannel (mesmo aparelho)
@@ -23,8 +24,7 @@ const Sync = (() => {
 
   let modo      = 'local';
   let fila      = [];
-  let pedidos   = [];
-  let ouvintes  = { fila: [], pedidos: [] };
+  let ouvintes  = [];
   let statusCbs = [];
   let online    = true;
   let minhaRef  = null;   // firebase
@@ -32,33 +32,12 @@ const Sync = (() => {
   let pulso     = null;
   let jaDespediu = false;   // evita mandar o DELETE duas vezes (pagehide + beforeunload)
 
-  /* chave estável a partir do texto, para a mesma questão não duplicar */
-  const chaveDe = txt => txt.normalize('NFD').replace(/[̀-ͯ]/g, '')
-                            .toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                            .replace(/^-+|-+$/g, '').slice(0, 60);
-
-  const aviseFila    = () => ouvintes.fila.forEach(fn => { try { fn(fila.slice()); } catch (e) { console.error(e); } });
-  const avisePedidos = () => ouvintes.pedidos.forEach(fn => { try { fn(pedidos.slice()); } catch (e) { console.error(e); } });
-  const status       = (ok, txt) => { online = ok; statusCbs.forEach(fn => fn(ok, txt)); };
-
-  /* objeto guardado -> lista ordenada pela primeira solicitação */
-  function ordenarPedidos(obj) {
-    return Object.entries(obj || {})
-      .map(([chave, v]) => ({
-        chave,
-        categoria: v.categoria,
-        titulo: v.titulo,
-        opcao: v.opcao,
-        ordem: v.ordem || 0,
-        solicitantes: Object.values(v.solicitantes || {})
-      }))
-      .sort((a, b) => a.ordem - b.ordem);
-  }
+  const aviseFila = () => ouvintes.forEach(fn => { try { fn(fila.slice()); } catch (e) { console.error(e); } });
+  const status    = (ok, txt) => { online = ok; statusCbs.forEach(fn => fn(ok, txt)); };
 
   /* ============================ MODO LOCAL ============================ */
 
-  const K_FILA    = `simuladi:${SALA}:fila`;
-  const K_PEDIDOS = `simuladi:${SALA}:pedidos`;
+  const K_FILA = `simuladi:${SALA}:fila`;
   const canal = ('BroadcastChannel' in window) ? new BroadcastChannel(`simuladi:${SALA}`) : null;
 
   const ler = chave => { try { return JSON.parse(localStorage.getItem(chave) || 'null'); } catch (e) { return null; } };
@@ -66,12 +45,6 @@ const Sync = (() => {
   function gravarFila(arr, avisar = true) {
     localStorage.setItem(K_FILA, JSON.stringify(arr));
     if (avisar && canal) canal.postMessage('att');
-    recarregarLocal();
-  }
-
-  function gravarPedidos(obj) {
-    localStorage.setItem(K_PEDIDOS, JSON.stringify(obj));
-    if (canal) canal.postMessage('att');
     recarregarLocal();
   }
 
@@ -84,15 +57,13 @@ const Sync = (() => {
       if (canal) canal.postMessage('att');
     }
     fila = vivos.sort((a, b) => a.ordem - b.ordem);
-    pedidos = ordenarPedidos(ler(K_PEDIDOS) || {});
     aviseFila();
-    avisePedidos();
   }
 
   const localAPI = {
     iniciar() {
       if (canal) canal.onmessage = recarregarLocal;
-      window.addEventListener('storage', e => { if (e.key === K_FILA || e.key === K_PEDIDOS) recarregarLocal(); });
+      window.addEventListener('storage', e => { if (e.key === K_FILA) recarregarLocal(); });
       setInterval(recarregarLocal, 3000);
       recarregarLocal();
       status(true, 'Modo local');
@@ -124,27 +95,11 @@ const Sync = (() => {
     },
 
     remover(key) { gravarFila((ler(K_FILA) || []).filter(e => e.key !== key)); return Promise.resolve(); },
-    limpar()     { gravarFila([]); return Promise.resolve(); },
-
-    registrarPedido({ categoria, titulo, opcao, delegacao, bandeira }) {
-      const chave = chaveDe(opcao);
-      const tudo = ler(K_PEDIDOS) || {};
-      const atual = tudo[chave] || { categoria, titulo, opcao, ordem: Date.now(), solicitantes: {} };
-      atual.categoria = categoria; atual.titulo = titulo; atual.opcao = opcao;
-      atual.solicitantes[chaveDe(delegacao)] = { nome: delegacao, bandeira };
-      tudo[chave] = atual;
-      gravarPedidos(tudo);
-      return Promise.resolve(chave);
-    },
-
-    removerPedido(chave) {
-      const tudo = ler(K_PEDIDOS) || {};
-      delete tudo[chave];
-      gravarPedidos(tudo);
+    removerVarios(keys) {
+      const fora = new Set(keys);
+      gravarFila((ler(K_FILA) || []).filter(e => !fora.has(e.key)));
       return Promise.resolve();
-    },
-
-    limparPedidos() { gravarPedidos({}); return Promise.resolve(); }
+    }
   };
 
   /* ============================ MODO FIREBASE ============================ */
@@ -157,7 +112,7 @@ const Sync = (() => {
     });
   }
 
-  let refFila = null, refPedidos = null;
+  let refFila = null;
 
   const fbAPI = {
     async iniciar() {
@@ -167,8 +122,7 @@ const Sync = (() => {
 
       firebase.initializeApp(Config.firebase);
       const db = firebase.database();
-      refFila    = db.ref(`salas/${SALA}/fila`);
-      refPedidos = db.ref(`salas/${SALA}/pedidos`);
+      refFila = db.ref(`salas/${SALA}/fila`);
 
       db.ref('.info/connected').on('value', s => {
         status(!!s.val(), s.val() ? 'Conectado' : 'Reconectando…');
@@ -184,8 +138,6 @@ const Sync = (() => {
         fila = arr;                   // as chaves do push() já vêm em ordem cronológica
         aviseFila();
       });
-
-      refPedidos.on('value', snap => { pedidos = ordenarPedidos(snap.val()); avisePedidos(); });
     },
 
     async entrar(item) {
@@ -227,22 +179,11 @@ const Sync = (() => {
     },
 
     remover(key) { return refFila.child(key).remove(); },
-    limpar()     { return refFila.remove(); },
-
-    async registrarPedido({ categoria, titulo, opcao, delegacao, bandeira }) {
-      const chave = chaveDe(opcao);
-      const ref = refPedidos.child(chave);
-      // "ordem" só na criação, para a lista manter a ordem da 1ª solicitação
-      const jaExiste = (await ref.child('ordem').once('value')).exists();
-      const dados = { categoria, titulo, opcao };
-      if (!jaExiste) dados.ordem = firebase.database.ServerValue.TIMESTAMP;
-      dados[`solicitantes/${chaveDe(delegacao)}`] = { nome: delegacao, bandeira };
-      await ref.update(dados);
-      return chave;
-    },
-
-    removerPedido(chave) { return refPedidos.child(chave).remove(); },
-    limparPedidos()      { return refPedidos.remove(); }
+    /* um update com null em cada chave apaga todas numa única gravação */
+    removerVarios(keys) {
+      if (!keys.length) return Promise.resolve();
+      return refFila.update(Object.fromEntries(keys.map(k => [k, null])));
+    }
   };
 
   /* ============================ INTERFACE PÚBLICA ============================ */
@@ -254,7 +195,6 @@ const Sync = (() => {
     get modo()     { return modo; },
     get online()   { return online; },
     get fila()     { return fila.slice(); },
-    get pedidos()  { return pedidos.slice(); },
     get minhaKey() { return minhaKey; },
 
     async iniciar() {
@@ -291,18 +231,13 @@ const Sync = (() => {
       return this;
     },
 
-    aoMudar(fn)        { ouvintes.fila.push(fn); fn(fila.slice()); return this; },
-    aoMudarPedidos(fn) { ouvintes.pedidos.push(fn); fn(pedidos.slice()); return this; },
-    aoStatus(fn)       { statusCbs.push(fn); fn(online, ''); return this; },
+    aoMudar(fn)  { ouvintes.push(fn); fn(fila.slice()); return this; },
+    aoStatus(fn) { statusCbs.push(fn); fn(online, ''); return this; },
 
-    entrar(item) { return api.entrar(item); },
-    sair()       { return api.sair(); },
-    remover(key) { return api.remover(key); },
-    limpar()     { return api.limpar(); },
-
-    registrarPedido(p)   { return api.registrarPedido(p); },
-    removerPedido(chave) { return api.removerPedido(chave); },
-    limparPedidos()      { return api.limparPedidos(); },
+    entrar(item)        { return api.entrar(item); },
+    sair()              { return api.sair(); },
+    remover(key)        { return api.remover(key); },
+    removerVarios(keys) { return api.removerVarios(keys); },
 
     posicao(key) { return fila.findIndex(e => e.key === key) + 1; }
   };

@@ -16,7 +16,7 @@ da UFF e da UNIRIO.
 |---|---|
 | `/` | Entrada: a delegação escolhe o país e digita a senha |
 | `/pedido/` | Pede questão ou moção, entra na lista de oradores e acompanha a própria posição |
-| `/painel/` | Projeção: quem está com a palavra, a fila de países e os pedidos abertos |
+| `/painel/` | Projeção: quem está com a palavra e a fila, exibida em duas listas — oradores, e questões e moções |
 | `/senhas/` | Utilitário para gerar as senhas das delegações em hash |
 
 A fila sincroniza em tempo real entre todos os aparelhos. A mesa diretora libera controles
@@ -39,6 +39,9 @@ extras na tela de projeção com uma senha própria.
   externo é o plano gratuito do Firebase.
 - **Sem build.** O que está no repositório é exatamente o que vai para o ar, o que torna o
   deploy e a depuração triviais.
+- **Uma fila só para todo pedido de fala.** Orador, questão e moção entram na mesma
+  fila, por ordem de chegada, e só uma pessoa fala por vez. A projeção separa a
+  exibição em duas listas, mas cada item mostra a posição global.
 - **Camada de sincronização plugável.** `sync.js` expõe a mesma interface sobre dois
   adaptadores: `localStorage` (para desenvolver sozinho) e Firebase (para o evento). A
   escolha é automática, pela presença da chave em `config.js`.
@@ -58,7 +61,7 @@ assets/
   js/
     config.js         delegações, questões, moções e credenciais
     ui.js             utilitários: seletores, sessão, avisos, hash
-    sync.js           fila e pedidos, com os dois adaptadores
+    sync.js           fila de pedidos de fala, com os dois adaptadores
     pedido.js         lógica da tela do delegado
     painel.js         lógica da tela de projeção
     qr.js             gerador de QR code

@@ -291,6 +291,15 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207
 
 .stack>*+*{ margin-top:10px; }
 .acoes{ margin-top:22px; }
+/* separador "ou ..." entre a inscrição de orador e as questões e moções */
+.divisor{
+  display:flex; align-items:center; gap:12px; margin:24px 0 14px;
+  font-size:11.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:rgba(255,255,255,.5);
+}
+.divisor::before,.divisor::after{ content:''; flex:1; height:1px; background:var(--hair); }
+/* "Enviar pedido" fica logo abaixo dos acordeões, que já têm margem própria */
+#viewEscolha .stack{ margin-top:6px; }
 
 /* ============================ acordeão de opções ============================ */
 
@@ -601,6 +610,12 @@ body.painel{ overflow:hidden; }
 .now__name--g{ font-size:clamp(44px,8.4vw,132px); }   /* até 14 caracteres */
 .now__name--m{ font-size:clamp(38px,6.4vw,102px); }   /* até 26 */
 .now__name--p{ font-size:clamp(30px,4.6vw,74px); }    /* acima disso */
+/* questão ou moção: o tema fica logo abaixo do país, menor */
+.now__tema{
+  margin:clamp(10px,1.4vw,18px) 0 0;
+  font-size:clamp(18px,2.2vw,32px); font-weight:400; line-height:1.25;
+  color:rgba(255,255,255,.78); text-wrap:balance;
+}
 .now__what{
   display:inline-flex; align-items:center; gap:12px; align-self:flex-start;
   font-size:clamp(17px,2.1vw,30px); font-weight:500; line-height:1.25;
@@ -641,33 +656,39 @@ body.mesa-on .now__x{ display:block; }
 .pedidos::-webkit-scrollbar{ width:0; height:0; }
 .fila::-webkit-scrollbar{ width:0; height:0; }
 
-/* --- lista de questões e moções (persiste até a mesa remover) --- */
+/* --- fila de questões e moções ---
+   Mesma fila dos oradores, só exibida à parte. Cada card mostra a posição
+   global, o país em destaque e o tema embaixo. */
 .pedidos{
   list-style:none; margin:0; padding:0;
   display:flex; flex-direction:column; gap:8px;
   flex:1; min-height:0; overflow-y:auto;
 }
 .pedido{
-  /* o × da mesa fica na coluna da direita e ocupa as duas linhas */
-  display:grid; gap:3px 10px; align-items:center;
-  grid-template-columns:minmax(0,1fr) auto;
-  grid-template-areas:'texto x' 'quem x';
-  padding:11px 13px; border-radius:14px;
+  /* número à esquerda e × da mesa à direita, ambos centralizados nas duas linhas */
+  display:grid; gap:2px 12px; align-items:center;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  grid-template-areas:'n pais x' 'n tema x';
+  padding:11px 14px 11px 11px; border-radius:14px;
   background:rgba(255,255,255,.06); border:1px solid var(--hair);
   animation:rowIn .3s var(--ease) both;
 }
-.pedido__texto{
-  grid-area:texto; font-size:clamp(13.5px,1.15vw,16px); font-weight:600; line-height:1.3;
+/* mesmo círculo da fila de oradores, um pouco maior para o card de duas linhas */
+.pedido__n{
+  grid-area:n; align-self:center;
+  width:30px; height:30px; border-radius:50%; display:grid; place-items:center;
+  font-family:'Oswald',sans-serif; font-weight:600; font-size:14px;
+  font-variant-numeric:tabular-nums;
+  background:rgba(255,255,255,.13);
 }
-/* quem pediu: nomes em linha, quebrando sozinho quando forem muitos */
-.pedido__quem{
-  grid-area:quem; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 5px;
-  font-size:clamp(11.5px,.95vw,13.5px); line-height:1.4;
-  color:rgba(255,255,255,.6);
+.pedido__pais{
+  grid-area:pais; font-size:clamp(14px,1.2vw,17px); font-weight:700; line-height:1.25;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-/* a vírgula cola no nome anterior: o -6px anula o gap da esquerda,
-   e o gap da direita vira o espaço depois dela */
-.pedido__sep{ color:rgba(255,255,255,.45); margin-left:-5px; }
+.pedido__tema{
+  grid-area:tema; font-size:clamp(12px,1vw,14px); line-height:1.35;
+  color:rgba(255,255,255,.62);
+}
 .pedido__x{
   grid-area:x; align-self:center;
   width:24px; height:24px; border-radius:50%; display:none; flex:none;

@@ -68,12 +68,12 @@
     $('#confFlag').textContent = UI.bandeira(delegacao.bandeira);
     if (selecao) {
       $('#confTitulo').textContent = 'Confirmar pedido de fala';
-      $('#confDesc').textContent   = 'Você entra na fila, e a questão ou moção vai para a lista da mesa.';
+      $('#confDesc').textContent   = `Você entra na fila e, quando chegar a sua vez, terá a palavra para a ${selecao.titulo.toLowerCase()}.`;
       $('#confTipo').textContent   = selecao.titulo;
       $('#confOpcao').textContent  = selecao.opcao;
     } else {
       $('#confTitulo').textContent = 'Inscrição na Lista de Oradores';
-      $('#confDesc').textContent   = 'Você entra na fila para discursar, sem registrar questão nem moção.';
+      $('#confDesc').textContent   = 'Você entra na fila para discursar como orador.';
       $('#confTipo').textContent   = delegacao.nome;
       $('#confOpcao').textContent  = 'Inscrição na Lista de Oradores';
     }
@@ -96,21 +96,11 @@
     const btn = $('#confOk');
     btn.disabled = true; btn.textContent = 'Enviando…';
     try {
-      // um pedido por delegação: se sobrou algum pedido antigo desta
-      // delegação na fila, ele dá lugar ao novo em vez de bloquear
+      // Um país aparece uma vez só na fila inteira, seja como orador, questão
+      // ou moção. Se sobrou um pedido antigo desta delegação (outro aparelho,
+      // navegador que fechou sem avisar), ele dá lugar ao novo em vez de bloquear.
       for (const velho of Sync.fila.filter(e => e.delegacao === delegacao.nome)) {
         await Sync.remover(velho.key).catch(() => {});
-      }
-
-      // a questão/moção vai para a lista própria dela, que só a mesa limpa
-      if (selecao) {
-        await Sync.registrarPedido({
-          categoria: selecao.categoria,
-          titulo: selecao.titulo,
-          opcao: selecao.opcao,
-          delegacao: delegacao.nome,
-          bandeira: delegacao.bandeira
-        });
       }
 
       minhaKey = await Sync.entrar({

@@ -34,11 +34,18 @@
       primeiro.delegacao.length <= 14 ? ' now__name--g' :
       primeiro.delegacao.length <= 26 ? ' now__name--m' : ' now__name--p';
 
+    // O rótulo diz o tipo de fala. Para questão e moção vem "Questão solicitada"
+    // ou "Moção solicitada", montado a partir do título da categoria no config,
+    // e o tema aparece logo abaixo do país, menor.
+    const pedeTema = primeiro && primeiro.categoria;
+    const kicker = pedeTema ? `${primeiro.titulo} solicitada` : 'Orador com a palavra';
+
     $('#agora').innerHTML = primeiro
       ? `<div class="now">
-           <p class="now__kicker">Com a palavra</p>
+           <p class="now__kicker">${kicker}</p>
            <div class="now__miolo">
              <h2 class="now__name${escala}">${primeiro.delegacao}</h2>
+             ${pedeTema ? `<p class="now__tema">${primeiro.opcao}</p>` : ''}
            </div>
            <div class="now__base">
              <p class="now__timer" id="cron">00:00</p>
@@ -49,39 +56,33 @@
            <h2 class="now__name">Nenhum pedido de fala no momento</h2>
          </div>`;
 
-    const resto = fila.slice(1);
-    $('#proximos').innerHTML = resto.length
-      ? resto.map((e, i) => `
+    // A fila é uma só; a projeção apenas separa a exibição em duas listas.
+    // Cada item leva a posição GLOBAL, para a sala ver que uma questão em 2º
+    // fala antes de um orador em 4º, mesmo estando em listas diferentes.
+    const resto    = fila.slice(1).map((e, i) => ({ ...e, pos: i + 2 }));
+    const oradores = resto.filter(e => !e.categoria);
+    const pedidos  = resto.filter(e => e.categoria);
+
+    $('#proximos').innerHTML = oradores.length
+      ? oradores.map(e => `
           <li class="fila__item">
-            <span class="fila__n">${i + 2}</span>
+            <span class="fila__n">${e.pos}</span>
             <span class="flag" style="font-size:20px">${UI.bandeira(e.bandeira)}</span>
             <span class="fila__nome">${e.delegacao}</span>
             <button class="fila__x" data-remover="${e.key}" title="Remover da fila" aria-label="Remover ${e.delegacao}">×</button>
           </li>`).join('')
-      : `<li class="empty">Nenhum país aguardando.</li>`;
-  }
+      : `<li class="empty">Nenhum orador aguardando.</li>`;
 
-  /* ---------------------------------------------------------
-     lista de questões e moções (independente da fila)
-     --------------------------------------------------------- */
-  let assinaturaPedidos = null;
-
-  function desenharPedidos(lista) {
-    const nova = lista.map(p => p.chave + ':' + p.solicitantes.length).join('|');
-    if (nova === assinaturaPedidos) return;
-    assinaturaPedidos = nova;
-
-    $('#listaPedidos').innerHTML = lista.length
-      ? lista.map(p => `
+    $('#listaPedidos').innerHTML = pedidos.length
+      ? pedidos.map(e => `
           <li class="pedido">
-            <span class="pedido__texto">${p.opcao}</span>
-            <span class="pedido__quem">${p.solicitantes
-                .map(s => `<span class="pedido__pais">${s.nome}</span>`)
-                .join('<span class="pedido__sep" aria-hidden="true">,</span>')}</span>
-            <button class="pedido__x" data-remover-pedido="${p.chave}" title="Remover questão"
-                    aria-label="Remover ${p.opcao}">×</button>
+            <span class="pedido__n">${e.pos}</span>
+            <span class="pedido__pais">${e.delegacao}</span>
+            <span class="pedido__tema">${e.opcao}</span>
+            <button class="pedido__x" data-remover="${e.key}" title="Remover da fila"
+                    aria-label="Remover ${e.delegacao}">×</button>
           </li>`).join('')
-      : `<li class="empty">Nenhuma questão ou moção solicitada.</li>`;
+      : `<li class="empty">Nenhuma questão ou moção na fila.</li>`;
   }
 
   setInterval(() => { const c = $('#cron'); if (c) c.textContent = UI.cronometro(desde); }, 1000);
@@ -137,21 +138,25 @@
   $$('[data-fechar]').forEach(b => b.addEventListener('click', () => UI.fechar(sheet)));
   sheet.addEventListener('click', e => { if (e.target === sheet) UI.fechar(sheet); });
 
-  // vale para a fila e também para quem está com a palavra
+  // vale para as duas listas e também para quem está com a palavra
   document.addEventListener('click', e => {
     if (!mesa) return;
-    const naFila = e.target.closest('[data-remover]');
-    if (naFila) { Sync.remover(naFila.dataset.remover); return; }
-    const pedido = e.target.closest('[data-remover-pedido]');
-    if (pedido) Sync.removerPedido(pedido.dataset.removerPedido);
+    const alvo = e.target.closest('[data-remover]');
+    if (alvo) Sync.remover(alvo.dataset.remover);
   });
 
+  // Cada botão limpa só o seu tipo. Se quem está com a palavra for desse
+  // tipo, sai também — e a palavra passa ao próximo da fila.
+  const chavesDe = ehPedido => Sync.fila.filter(e => !!e.categoria === ehPedido).map(e => e.key);
+
   $('#btnLimpar').addEventListener('click', () => {
-    if (confirm('Remover todos os países da fila? As questões e moções continuam na lista.')) Sync.limpar();
+    if (confirm('Remover todos os oradores da fila? As questões e moções continuam.'))
+      Sync.removerVarios(chavesDe(false));
   });
 
   $('#btnLimparPedidos').addEventListener('click', () => {
-    if (confirm('Remover todas as questões e moções solicitadas? A fila de países continua.')) Sync.limparPedidos();
+    if (confirm('Remover todas as questões e moções da fila? Os oradores continuam.'))
+      Sync.removerVarios(chavesDe(true));
   });
 
   /* ---------------------------------------------------------
@@ -210,7 +215,6 @@
      --------------------------------------------------------- */
   Sync.iniciar().then(s => {
     s.aoMudar(desenhar);
-    s.aoMudarPedidos(desenharPedidos);
     s.aoStatus(UI.monitorarConexao($('#avisoConexao')));
   });
 

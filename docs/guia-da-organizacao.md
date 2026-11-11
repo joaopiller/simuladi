@@ -3,18 +3,12 @@
 Como configurar e operar o SimuLADI durante o evento.
 Para a visão geral do projeto, veja o [README](../README.md).
 
-Site para organizar a ordem dos pedidos de fala (questões e moções) das delegações
+Site para organizar a ordem dos pedidos de fala (oradores, questões e moções) das delegações
 na Simulação da ONU das **Ligas Acadêmicas de Direito Internacional da UFF e da UNIRIO**.
 
 Site 100% estático: HTML, CSS e JavaScript. Sem backend próprio, sem servidor para manter.
 
 ---
-
-> ### ⚠️ Já configurou o Firebase antes? Republique as regras
-> A partir da versão com lista separada de questões e moções, as regras antigas
-> **recusam** dois casos: entrar na fila sem selecionar questão/moção, e gravar no
-> nó `pedidos`. Copie as regras da etapa 3 (seção Firebase) e publique de novo no
-> console, senão o site mostra "o Firebase recusou a gravação".
 
 ## Páginas
 
@@ -86,10 +80,6 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
              "$pedido": {
                ".validate": "newData.hasChildren(['delegacao','ordem'])"
              }
-           },
-           "pedidos": {
-             ".read": true,
-             ".write": true
            }
          }
        }
@@ -234,16 +224,18 @@ do banco.
 
 ## Regras da fila (como o site se comporta)
 
-- Existem **duas listas independentes**:
-  - a **fila de países**, por ordem de chegada, que se esvazia sozinha conforme as
-    delegações falam ou fecham o navegador;
-  - a **lista de questões e moções**, que só a mesa diretora remove. Quando um país
-    sai da fila, a questão dele **permanece** na lista.
-- Uma delegação pode **entrar na fila sem selecionar** questão nem moção, pelo botão
-  *Inscrição na Lista de Oradores*.
-- Se duas ou mais delegações pedirem a **mesma** questão ou moção, ela aparece **uma
-  vez só** na lista, com as bandeirinhas de quem solicitou.
-- A ordem é **por chegada**: quem confirma primeiro fica em primeiro.
+- Existe **uma fila só** de pedidos de fala. Cada pedido é de um tipo: **orador**
+  (*Inscrição na Lista de Oradores*), **questão** ou **moção**.
+- A ordem é **por chegada**, sem prioridade entre os tipos: quem confirma primeiro
+  fica em primeiro. Quem está em primeiro tem a palavra, seja qual for o tipo — não
+  há orador falando enquanto uma questão ou moção está sendo feita.
+- A tela de projeção **exibe** a fila em duas listas — *Fila de oradores* e *Fila de
+  questões e moções* — mas a ordem é uma só. Cada item mostra a **posição global**:
+  uma questão em 2º fala antes de um orador em 4º.
+- O cartão grande diz o tipo de fala: *Orador com a palavra*, *Questão solicitada*
+  ou *Moção solicitada*. Nos dois últimos, o tema aparece abaixo do nome do país.
+- Se duas delegações pedirem a **mesma** questão ou moção, cada uma tem a **sua vez**
+  de falar, em entradas separadas.
 - Só o **primeiro** da fila vê "Sua vez de falar!" — com aviso sonoro e vibração.
 - O botão **QR code de acesso**, na tela de projeção, abre um código grande que leva à
   página inicial (mantendo a sala da URL). O código é gerado no próprio navegador,
@@ -264,6 +256,9 @@ do banco.
   inscrição fica na fila. A mesa remove pelo **×**, no modo mesa.
 - **Recarregar a página também tira o pedido da fila** — é o mesmo que fechar o
   navegador. A delegação precisa pedir de novo.
-- Cada delegação pode ter **um pedido por vez**.
-- A mesa diretora pode remover pedidos individuais ou limpar a fila inteira
-  em `/painel/`, após liberar o *Modo mesa* com a senha definida em `config.js`.
+- Cada delegação aparece **uma vez só** na fila inteira. Um pedido novo substitui o
+  anterior e vai para o fim da fila.
+- A mesa diretora, após liberar o *Modo mesa* com a senha definida em `config.js`,
+  pode remover qualquer pedido pelo **×**, ou usar *Limpar oradores* e *Limpar
+  questões*, que removem só os pedidos daquele tipo — incluindo quem está com a
+  palavra, se for do tipo limpo.
