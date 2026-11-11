@@ -57,16 +57,18 @@
          </div>`;
 
     // A fila é uma só; a projeção apenas separa a exibição em duas listas.
-    // Cada item leva a posição GLOBAL, para a sala ver que uma questão em 2º
-    // fala antes de um orador em 4º, mesmo estando em listas diferentes.
-    const resto    = fila.slice(1).map((e, i) => ({ ...e, pos: i + 2 }));
+    // Cada item leva a posição GLOBAL na espera, para a sala ver que uma
+    // questão em 1º fala antes de um orador em 3º, mesmo em listas diferentes.
+    // Começa do 1: quem está com a palavra não está mais esperando, e assim o
+    // número do telão é o mesmo que o celular mostra em "na sua frente".
+    const resto    = fila.slice(1).map((e, i) => ({ ...e, pos: i + 1 }));
     const oradores = resto.filter(e => !e.categoria);
     const pedidos  = resto.filter(e => e.categoria);
 
     // O próximo a falar pode estar em qualquer das duas listas; destacá-lo
-    // poupa a sala de procurar o número 2 nas duas.
-    const proximo = e => e.pos === 2 ? ' is-proximo' : '';
-    const tagProximo = e => e.pos === 2 ? ' <span class="proximo-tag">próximo</span>' : '';
+    // poupa a sala de procurar o número 1 nas duas.
+    const proximo = e => e.pos === 1 ? ' is-proximo' : '';
+    const tagProximo = e => e.pos === 1 ? ' <span class="proximo-tag">próximo</span>' : '';
 
     $('#proximos').innerHTML = oradores.length
       ? oradores.map(e => `
