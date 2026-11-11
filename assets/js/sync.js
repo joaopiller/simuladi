@@ -26,11 +26,32 @@ const Sync = (() => {
   let fila      = [];
   let ouvintes  = [];
   let statusCbs = [];
-  let online    = true;
+  let online    = false;  // só vira true quando o servidor confirma a conexão
   let minhaRef  = null;   // firebase
   let minhaKey  = null;
   let pulso     = null;
   let jaDespediu = false;   // evita mandar o DELETE duas vezes (pagehide + beforeunload)
+
+  /* Erros carregam um código que a interface traduz em mensagem para a pessoa:
+       offline      — sem conexão no momento do pedido
+       tempo        — o servidor não respondeu a tempo
+       indisponivel — o Firebase nem chegou a carregar
+       permissao    — as regras do banco recusaram a gravação */
+  class ErroSync extends Error {
+    constructor(codigo, msg) { super(msg || codigo); this.codigo = codigo; }
+  }
+  const traduzir = e => e instanceof ErroSync ? e
+    : new ErroSync(String(e && e.message || e).includes('PERMISSION_DENIED') ? 'permissao' : 'desconhecido', e && e.message);
+  const prazo = (promessa, ms, codigo = 'tempo') => Promise.race([
+    promessa, new Promise((_, nao) => setTimeout(() => nao(new ErroSync(codigo)), ms))
+  ]);
+
+  /* As gravações esperam a conexão ficar pronta. Sem isso, quem tocava em
+     "Confirmar" antes de o SDK terminar de carregar via um erro — o que, num
+     Wi-Fi de evento, acontece com facilidade. */
+  let marcarPronto, falharPronto;
+  const pronto = new Promise((ok, nao) => { marcarPronto = ok; falharPronto = nao; });
+  pronto.catch(() => {});
 
   const aviseFila = () => ouvintes.forEach(fn => { try { fn(fila.slice()); } catch (e) { console.error(e); } });
   const status    = (ok, txt) => { online = ok; statusCbs.forEach(fn => fn(ok, txt)); };
@@ -95,6 +116,7 @@ const Sync = (() => {
     },
 
     remover(key) { gravarFila((ler(K_FILA) || []).filter(e => e.key !== key)); return Promise.resolve(); },
+    reconectar() { recarregarLocal(); },
     removerVarios(keys) {
       const fora = new Set(keys);
       gravarFila((ler(K_FILA) || []).filter(e => !fora.has(e.key)));
@@ -104,12 +126,15 @@ const Sync = (() => {
 
   /* ============================ MODO FIREBASE ============================ */
 
-  function carregarScript(src) {
-    return new Promise((ok, erro) => {
+  /* Os dois arquivos do SDK baixam em paralelo e executam na ordem
+     (async = false). Antes eram buscados um depois do outro. */
+  function carregarScripts(srcs, ms = 20000) {
+    return prazo(Promise.all(srcs.map(src => new Promise((ok, erro) => {
       const s = document.createElement('script');
-      s.src = src; s.onload = ok; s.onerror = () => erro(new Error('falha ao carregar ' + src));
+      s.src = src; s.async = false;
+      s.onload = ok; s.onerror = () => erro(new ErroSync('indisponivel', 'falha ao carregar ' + src));
       document.head.appendChild(s);
-    });
+    }))), ms, 'indisponivel');
   }
 
   let refFila = null;
@@ -117,8 +142,7 @@ const Sync = (() => {
   const fbAPI = {
     async iniciar() {
       const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
-      await carregarScript(base + 'firebase-app-compat.js');
-      await carregarScript(base + 'firebase-database-compat.js');
+      await carregarScripts([base + 'firebase-app-compat.js', base + 'firebase-database-compat.js']);
 
       firebase.initializeApp(Config.firebase);
       const db = firebase.database();
@@ -128,6 +152,10 @@ const Sync = (() => {
         status(!!s.val(), s.val() ? 'Conectado' : 'Reconectando…');
       });
 
+      // espera o primeiro retrato da fila: até lá, "fila vazia" seria mentira
+      let primeira;
+      const chegou = new Promise(ok => { primeira = ok; });
+
       refFila.on('value', snap => {
         const arr = [];
         // ATENÇÃO: o forEach do Firebase PARA a iteração se o callback devolver
@@ -135,14 +163,30 @@ const Sync = (() => {
         // corpo precisa ficar entre chaves, sem retornar valor, senão a fila
         // inteira vira só o primeiro país.
         snap.forEach(filho => { arr.push({ key: filho.key, ...filho.val() }); });
-        fila = arr;                   // as chaves do push() já vêm em ordem cronológica
+        // Ordem pelo horário do SERVIDOR, e não pela chave: a chave é gerada
+        // no aparelho e podia ser forjada para passar na frente de todos.
+        // As regras do banco exigem ordem === now, então o horário não se falsifica.
+        arr.sort((a, b) => (a.ordem || 0) - (b.ordem || 0) || (a.key < b.key ? -1 : 1));
+        fila = arr;
         aviseFila();
+        primeira();
       });
+      await prazo(chegou, 20000, 'indisponivel');
+    },
+
+    /* Uma conexão nova na hora. Usado quando a tela do celular acorda: a
+       conexão antiga pode ter morrido em silêncio enquanto o aparelho
+       dormia, e a tela continuaria mostrando a fila de antes. */
+    reconectar() {
+      if (!window.firebase || !firebase.apps.length) return;
+      const db = firebase.database();
+      db.goOffline(); db.goOnline();
     },
 
     async entrar(item) {
-      minhaRef = refFila.push();
-      minhaKey = minhaRef.key;
+      if (!online) throw new ErroSync('offline');
+      const ref = refFila.push();
+      minhaRef = ref; minhaKey = ref.key;
       /* NÃO registramos onDisconnect aqui, de propósito.
          Ele manda o servidor apagar a inscrição sempre que a conexão cai —
          inclusive quando o celular só APAGA A TELA e o sistema suspende o
@@ -151,14 +195,25 @@ const Sync = (() => {
          troca de delegação, ou despedirAgora() ao descartar a página.
          O preço disso: se o navegador morrer sem avisar (pane, bateria
          acabando), a inscrição fica na fila até a mesa remover pelo ×. */
-      await minhaRef.set({ ...item, ordem: firebase.database.ServerValue.TIMESTAMP });
+      try {
+        await prazo(ref.set({ ...item, ordem: firebase.database.ServerValue.TIMESTAMP }), 12000);
+      } catch (e) {
+        // O SDK guarda a gravação e tenta de novo sozinho quando a conexão
+        // volta. Como a pessoa já recebeu um aviso de erro, entrar na fila
+        // "atrasado" seria pior: o remove() entra na mesma fila e anula.
+        ref.remove().catch(() => {});
+        minhaRef = null; minhaKey = null;
+        throw traduzir(e);
+      }
       return minhaKey;
     },
 
     async sair() {
       if (!minhaRef) return;
-      await minhaRef.remove();
+      const ref = minhaRef;
       minhaRef = null; minhaKey = null;
+      // sem internet, o remove() fica guardado e sai sozinho quando a conexão voltar
+      await prazo(ref.remove(), 6000).catch(e => { throw traduzir(e); });
     },
 
     /* Saída usada quando a página está sendo descartada (voltar, fechar a aba).
@@ -170,25 +225,26 @@ const Sync = (() => {
     despedirAgora() {
       if (!minhaKey || jaDespediu) return;
       jaDespediu = true;
-      const base = String(Config.firebase.databaseURL || '').replace(/\/+$/, '');
-      if (!base) return;
       try {
-        fetch(`${base}/salas/${SALA}/fila/${minhaKey}.json`,
-              { method: 'DELETE', keepalive: true });
+        // monta pelo objeto URL para preservar parâmetros do endereço do banco
+        const u = new URL(Config.firebase.databaseURL);
+        u.pathname = u.pathname.replace(/\/+$/, '') + `/salas/${SALA}/fila/${encodeURIComponent(minhaKey)}.json`;
+        fetch(u.href, { method: 'DELETE', keepalive: true });
       } catch (e) {}
     },
 
-    remover(key) { return refFila.child(key).remove(); },
+    remover(key) { return prazo(refFila.child(key).remove(), 8000).catch(e => { throw traduzir(e); }); },
     /* um update com null em cada chave apaga todas numa única gravação */
     removerVarios(keys) {
       if (!keys.length) return Promise.resolve();
-      return refFila.update(Object.fromEntries(keys.map(k => [k, null])));
+      return prazo(refFila.update(Object.fromEntries(keys.map(k => [k, null]))), 8000).catch(e => { throw traduzir(e); });
     }
   };
 
   /* ============================ INTERFACE PÚBLICA ============================ */
 
   let api = localAPI;
+  let estaPronto = false;
 
   return {
     sala: SALA,
@@ -196,20 +252,24 @@ const Sync = (() => {
     get online()   { return online; },
     get fila()     { return fila.slice(); },
     get minhaKey() { return minhaKey; },
+    get pronto()   { return estaPronto; },
+    quandoPronto() { return pronto; },
 
     async iniciar() {
-      if (Config.usaFirebase()) {
-        modo = 'firebase'; api = fbAPI;
-        try { await fbAPI.iniciar(); }
-        catch (e) {
-          console.error('Firebase indisponível, caindo para modo local:', e);
-          modo = 'local'; api = localAPI;
-          await localAPI.iniciar();
-          status(false, 'Sem conexão — modo local');
-        }
-      } else {
-        await localAPI.iniciar();
+      try {
+        if (Config.usaFirebase()) { modo = 'firebase'; api = fbAPI; await fbAPI.iniciar(); }
+        else await localAPI.iniciar();
+      } catch (e) {
+        // NÃO cai para o modo local. Antes caía: o pedido ia só para este
+        // aparelho e a pessoa via "Sua vez de falar!" sem estar na fila real.
+        const erro = traduzir(e);
+        console.error('Sem conexão com a fila:', e);
+        status(false, 'Sem conexão');
+        falharPronto(erro);
+        throw erro;
       }
+      estaPronto = true;
+      marcarPronto();
 
       // Saída da fila ao deixar a página.
       //
@@ -226,18 +286,29 @@ const Sync = (() => {
       };
       window.addEventListener('pagehide', despedir);
       window.addEventListener('beforeunload', despedir);
-      // a página pode voltar do cache do navegador: rearma para a próxima saída
-      window.addEventListener('pageshow', () => { jaDespediu = false; });
+      // a página pode voltar do cache do navegador: rearma a saída e busca a fila de novo
+      window.addEventListener('pageshow', e => { jaDespediu = false; if (e.persisted) api.reconectar(); });
+
+      // Tela do celular acordando: força uma conexão nova se ficou escondida
+      // por mais que alguns segundos. "resume" cobre a aba que o sistema congelou.
+      let escondidaDesde = null;
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { escondidaDesde = Date.now(); return; }
+        if (escondidaDesde && Date.now() - escondidaDesde > 5000) api.reconectar();
+        escondidaDesde = null;
+      });
+      document.addEventListener('resume', () => api.reconectar());
+      window.addEventListener('online', () => api.reconectar());
       return this;
     },
 
     aoMudar(fn)  { ouvintes.push(fn); fn(fila.slice()); return this; },
     aoStatus(fn) { statusCbs.push(fn); fn(online, ''); return this; },
 
-    entrar(item)        { return api.entrar(item); },
-    sair()              { return api.sair(); },
-    remover(key)        { return api.remover(key); },
-    removerVarios(keys) { return api.removerVarios(keys); },
+    async entrar(item)        { await pronto; return api.entrar(item); },
+    async sair()              { await pronto; return api.sair(); },
+    async remover(key)        { await pronto; return api.remover(key); },
+    async removerVarios(keys) { await pronto; return api.removerVarios(keys); },
 
     posicao(key) { return fila.findIndex(e => e.key === key) + 1; }
   };

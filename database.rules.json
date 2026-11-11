@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "salas": {
+      "$sala": {
+        "fila": {
+          ".read": true,
+          "$pedido": {
+            ".write": "!data.exists() || !newData.exists()",
+            ".validate": "newData.hasChildren(['delegacao', 'ordem'])",
+            "delegacao": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+            "bandeira":  { ".validate": "newData.isString() && newData.val().length <= 16" },
+            "categoria": { ".validate": "newData.isString() && newData.val().length <= 30" },
+            "titulo":    { ".validate": "newData.isString() && newData.val().length <= 30" },
+            "opcao":     { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "ordem":     { ".validate": "newData.val() === now" },
+            "$outro":    { ".validate": false }
+          }
+        }
+      }
+    }
+  }
+}

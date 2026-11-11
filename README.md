@@ -49,6 +49,22 @@ extras na tela de projeção com uma senha própria.
   descartar a página — nunca por queda de conexão, para que ninguém perca a vez de falar
   quando a tela do celular apaga.
 
+## Segurança
+
+Sem backend, quem tem o endereço do banco pode gravar nele diretamente. Por isso:
+
+- **Todo texto vindo do banco é escapado** antes de ir para a tela, e nunca é
+  interpretado como HTML.
+- As **regras do banco** ([`database.rules.json`](database.rules.json)) permitem
+  apenas criar ou apagar pedidos individuais, com campos validados e horário do
+  servidor — não dá para alterar o pedido de outro país, furar a fila nem apagar a
+  fila inteira.
+
+Limites conhecidos, inerentes a não ter servidor de autenticação: quem souber usar
+a API ainda consegue apagar pedidos um a um ou criar pedidos em nome de um país, e
+as senhas, embora guardadas como hash, podem ser descobertas por força bruta a
+partir do `config.js` público. Fechar isso exige o Firebase Authentication.
+
 ## Estrutura
 
 ```
@@ -67,6 +83,7 @@ assets/
     qr.js             gerador de QR code
   img/                logo, ícones e imagem de compartilhamento
 docs/                 guia de operação do evento
+database.rules.json   regras de segurança do Firebase
 ```
 
 ## Rodando localmente

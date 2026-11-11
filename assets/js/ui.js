@@ -7,6 +7,15 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
 const UI = {
 
+  /* Texto que vem do banco é DADO, nunca HTML. Como as regras do Firebase
+     deixam qualquer pessoa gravar, um "nome de país" pode conter código —
+     e ele rodaria na projeção e em todos os celulares se fosse inserido
+     cru com innerHTML. Tudo que vem da fila passa por aqui. */
+  esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  },
+
   /* Bandeira da delegação.
      Duas letras = código do país, convertido para o emoji da bandeira.
      Qualquer outra coisa é usada como está — serve para delegações que não
@@ -15,7 +24,7 @@ const UI = {
     if (!valor) return '🏳️';
     if (/^[A-Za-z]{2}$/.test(valor))
       return String.fromCodePoint(...[...valor.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
-    return valor;
+    return UI.esc(valor);   // emoji direto também pode vir do banco
   },
 
   /* aviso flutuante */
@@ -34,6 +43,69 @@ const UI = {
   },
 
   /* abre/fecha uma folha (modal) */
+  /* Janela de aviso para o que precisa de atenção: diz o que aconteceu e o
+     que fazer. Devolve uma promessa — true se a pessoa tocou no botão
+     principal, false se escolheu o secundário ou fechou.
+     Avisos rápidos de sucesso continuam no toast; esta é para erros e
+     situações que mudam o que a pessoa vê. */
+  dialogo({ titulo, texto, botao = 'Entendi', secundario = null, tipo = 'erro' }) {
+    return new Promise(resolve => {
+      $('#dialogo')?.remove();
+      const el = document.createElement('div');
+      el.className = 'sheet'; el.id = 'dialogo';
+      el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-modal', 'true');
+      el.setAttribute('aria-labelledby', 'dialogoTit');
+      el.innerHTML = `
+        <div class="sheet__box dialogo dialogo--${tipo}">
+          <div class="dialogo__icone" aria-hidden="true">${tipo === 'erro' ? '!' : 'i'}</div>
+          <h2 class="sheet__title" id="dialogoTit">${UI.esc(titulo)}</h2>
+          <p class="sheet__desc">${UI.esc(texto)}</p>
+          <div class="sheet__actions">
+            ${secundario ? `<button class="btn btn--ghost" type="button" data-r="0">${UI.esc(secundario)}</button>` : ''}
+            <button class="btn btn--realce" type="button" data-r="1">${UI.esc(botao)}</button>
+          </div>
+        </div>`;
+      document.body.appendChild(el);
+      requestAnimationFrame(() => { UI.abrir(el); el.querySelector('[data-r="1"]').focus(); });
+
+      const encerrar = valor => {
+        document.removeEventListener('keydown', noTeclado);
+        UI.fechar(el);
+        setTimeout(() => el.remove(), 300);
+        resolve(valor);
+      };
+      const noTeclado = e => { if (e.key === 'Escape') encerrar(false); };
+      document.addEventListener('keydown', noTeclado);
+      el.addEventListener('click', e => {
+        const b = e.target.closest('[data-r]');
+        if (b) encerrar(b.dataset.r === '1');
+      });
+    });
+  },
+
+  /* O que dizer à pessoa para cada tipo de falha da fila (ver ErroSync em sync.js) */
+  mensagemDeErro(e, acao = 'Seu pedido não foi enviado.') {
+    const m = {
+      offline:      ['Sem conexão com a internet',
+                     `${acao} Confira o Wi-Fi ou os dados móveis e tente de novo.`],
+      tempo:        ['O servidor demorou para responder',
+                     `${acao} A conexão parece lenta — espere alguns segundos e tente de novo.`],
+      indisponivel: ['Não foi possível conectar à fila',
+                     'O site não conseguiu falar com o servidor da fila. Confira a internet e toque em "Tentar de novo".'],
+      permissao:    ['O servidor recusou a operação',
+                     `${acao} Avise a mesa diretora: pode ser uma configuração do sistema.`],
+    }[e && e.codigo] || ['Algo deu errado', `${acao} Tente de novo; se continuar, avise a mesa diretora.`];
+    return { titulo: m[0], texto: m[1] };
+  },
+
+  /* Falha ao conectar logo na abertura da página: sem a fila não há o que
+     mostrar, então a única saída útil é tentar de novo. */
+  async semConexaoNaAbertura(e) {
+    const { titulo, texto } = UI.mensagemDeErro(e);
+    await UI.dialogo({ titulo, texto, botao: 'Tentar de novo' });
+    location.reload();
+  },
+
   abrir(el)  { el.classList.add('is-open');    document.body.style.overflow = 'hidden'; },
   fechar(el) { el.classList.remove('is-open'); document.body.style.overflow = ''; },
 

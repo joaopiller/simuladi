@@ -67,7 +67,8 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
    (pode desativar o Google Analytics).
 2. No menu lateral: **Criar → Realtime Database → Criar banco de dados**.
    Escolha a região `us-central1` e a opção **modo de teste**.
-3. Ainda no Realtime Database, aba **Regras**, cole isto e publique:
+3. Ainda no Realtime Database, aba **Regras**, cole o conteúdo de
+   [`database.rules.json`](../database.rules.json) e publique:
 
    ```json
    {
@@ -76,9 +77,16 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
          "$sala": {
            "fila": {
              ".read": true,
-             ".write": true,
              "$pedido": {
-               ".validate": "newData.hasChildren(['delegacao','ordem'])"
+               ".write": "!data.exists() || !newData.exists()",
+               ".validate": "newData.hasChildren(['delegacao', 'ordem'])",
+               "delegacao": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+               "bandeira":  { ".validate": "newData.isString() && newData.val().length <= 16" },
+               "categoria": { ".validate": "newData.isString() && newData.val().length <= 30" },
+               "titulo":    { ".validate": "newData.isString() && newData.val().length <= 30" },
+               "opcao":     { ".validate": "newData.isString() && newData.val().length <= 120" },
+               "ordem":     { ".validate": "newData.val() === now" },
+               "$outro":    { ".validate": false }
              }
            }
          }
@@ -86,6 +94,13 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
      }
    }
    ```
+
+   O que essas regras garantem:
+   - um pedido só pode ser **criado ou apagado**, nunca alterado;
+   - ninguém apaga a fila inteira de uma vez;
+   - o horário de cada pedido é o do **servidor**, então não dá para forjar um
+     horário antigo e furar a fila;
+   - os campos têm tipo e tamanho limitados, e nada é gravado fora da fila.
 
 4. Vá em **Configurações do projeto → Seus apps → Web (`</>`)**, registre um app
    e copie o objeto `firebaseConfig`.
@@ -251,7 +266,12 @@ do banco.
   para fora ou recarregar.
 - **Apagar a tela do celular NÃO tira ninguém da fila.** A delegação segue inscrita,
   mesmo com o aparelho bloqueado por muito tempo — perder o lugar sem ter feito nada
-  seria pior do que qualquer ganho de limpeza automática.
+  seria pior do que qualquer ganho de limpeza automática. Ao desbloquear, o celular
+  reconecta na hora e mostra a posição atual; se a vez chegou com a tela apagada, o
+  aviso sonoro toca ao desbloquear.
+- **Erros aparecem em janelas que explicam o que houve e o que fazer**: sem internet,
+  servidor lento, servidor fora do ar. Sem conexão com o servidor, o celular **não**
+  deixa a pessoa achar que entrou na fila.
 - Em compensação, se o navegador morrer sem avisar (pane, bateria acabando), a
   inscrição fica na fila. A mesa remove pelo **×**, no modo mesa.
 - **Recarregar a página também tira o pedido da fila** — é o mesmo que fechar o

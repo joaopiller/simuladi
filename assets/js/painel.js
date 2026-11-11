@@ -31,25 +31,25 @@
     // nome longo em corpo grande invade o rótulo e o cronômetro. A escala segue o
     // comprimento: quase todas as delegações são curtas e ganham o corpo maior.
     const escala = !primeiro ? '' :
-      primeiro.delegacao.length <= 14 ? ' now__name--g' :
-      primeiro.delegacao.length <= 26 ? ' now__name--m' : ' now__name--p';
+      String(primeiro.delegacao).length <= 14 ? ' now__name--g' :
+      String(primeiro.delegacao).length <= 26 ? ' now__name--m' : ' now__name--p';
 
     // O rótulo diz o tipo de fala. Para questão e moção vem "Questão solicitada"
     // ou "Moção solicitada", montado a partir do título da categoria no config,
     // e o tema aparece logo abaixo do país, menor.
     const pedeTema = primeiro && primeiro.categoria;
-    const kicker = pedeTema ? `${primeiro.titulo} solicitada` : 'Orador com a palavra';
+    const kicker = pedeTema ? `${UI.esc(primeiro.titulo)} solicitada` : 'Orador com a palavra';
 
     $('#agora').innerHTML = primeiro
       ? `<div class="now">
            <p class="now__kicker">${kicker}</p>
            <div class="now__miolo">
-             <h2 class="now__name${escala}">${primeiro.delegacao}</h2>
-             ${pedeTema ? `<p class="now__tema">${primeiro.opcao}</p>` : ''}
+             <h2 class="now__name${escala}">${UI.esc(primeiro.delegacao)}</h2>
+             ${pedeTema ? `<p class="now__tema">${UI.esc(primeiro.opcao)}</p>` : ''}
            </div>
            <div class="now__base">
              <p class="now__timer" id="cron">00:00</p>
-             <button class="now__x" type="button" data-remover="${primeiro.key}">Encerrar fala</button>
+             <button class="now__x" type="button" data-remover="${UI.esc(primeiro.key)}">Encerrar fala</button>
            </div>
          </div>`
       : `<div class="now now--empty">
@@ -68,8 +68,8 @@
           <li class="fila__item">
             <span class="fila__n">${e.pos}</span>
             <span class="flag" style="font-size:20px">${UI.bandeira(e.bandeira)}</span>
-            <span class="fila__nome">${e.delegacao}</span>
-            <button class="fila__x" data-remover="${e.key}" title="Remover da fila" aria-label="Remover ${e.delegacao}">×</button>
+            <span class="fila__nome">${UI.esc(e.delegacao)}</span>
+            <button class="fila__x" data-remover="${UI.esc(e.key)}" title="Remover da fila" aria-label="Remover ${UI.esc(e.delegacao)}">×</button>
           </li>`).join('')
       : `<li class="empty">Nenhum orador aguardando.</li>`;
 
@@ -77,10 +77,10 @@
       ? pedidos.map(e => `
           <li class="pedido">
             <span class="pedido__n">${e.pos}</span>
-            <span class="pedido__pais">${e.delegacao}</span>
-            <span class="pedido__tema">${e.opcao}</span>
-            <button class="pedido__x" data-remover="${e.key}" title="Remover da fila"
-                    aria-label="Remover ${e.delegacao}">×</button>
+            <span class="pedido__pais">${UI.esc(e.delegacao)}</span>
+            <span class="pedido__tema">${UI.esc(e.opcao)}</span>
+            <button class="pedido__x" data-remover="${UI.esc(e.key)}" title="Remover da fila"
+                    aria-label="Remover ${UI.esc(e.delegacao)}">×</button>
           </li>`).join('')
       : `<li class="empty">Nenhuma questão ou moção na fila.</li>`;
   }
@@ -127,7 +127,8 @@
       ok = await UI.conferirSenha(
         { senha: Config.senhaMesa, hash: Config.hashMesa }, $('#senhaMesa').value);
     } catch (e) {
-      UI.aviso('Não foi possível verificar a senha. Recarregue a página e tente de novo.', true);
+      UI.dialogo({ titulo: 'Não foi possível verificar a senha',
+                   texto: 'O navegador não conseguiu conferir a senha da mesa. Recarregue a página e tente de novo.' });
       return;
     }
     if (ok) ligarMesa();
@@ -139,10 +140,17 @@
   sheet.addEventListener('click', e => { if (e.target === sheet) UI.fechar(sheet); });
 
   // vale para as duas listas e também para quem está com a palavra
+  const falhaDaMesa = e => {
+    console.error(e);
+    UI.dialogo(UI.mensagemDeErro(e, 'A alteração na fila não foi feita.'));
+  };
+
   document.addEventListener('click', e => {
     if (!mesa) return;
     const alvo = e.target.closest('[data-remover]');
-    if (alvo) Sync.remover(alvo.dataset.remover);
+    if (!alvo || alvo.disabled) return;
+    alvo.disabled = true;   // evita o segundo toque mandar a mesma remoção
+    Sync.remover(alvo.dataset.remover).catch(falhaDaMesa).finally(() => { alvo.disabled = false; });
   });
 
   // Cada botão limpa só o seu tipo. Se quem está com a palavra for desse
@@ -150,13 +158,21 @@
   const chavesDe = ehPedido => Sync.fila.filter(e => !!e.categoria === ehPedido).map(e => e.key);
 
   $('#btnLimpar').addEventListener('click', () => {
-    if (confirm('Remover todos os oradores da fila? As questões e moções continuam.'))
-      Sync.removerVarios(chavesDe(false));
+    const n = chavesDe(false).length;
+    if (!n) { UI.aviso('Não há oradores na fila.'); return; }
+    UI.dialogo({ tipo: 'info', titulo: `Remover ${n} ${n === 1 ? 'orador' : 'oradores'}?`,
+                 texto: 'Todos os oradores saem da fila, inclusive quem estiver com a palavra. As questões e moções continuam.',
+                 botao: 'Remover', secundario: 'Cancelar' })
+      .then(ok => ok && Sync.removerVarios(chavesDe(false)).catch(falhaDaMesa));
   });
 
   $('#btnLimparPedidos').addEventListener('click', () => {
-    if (confirm('Remover todas as questões e moções da fila? Os oradores continuam.'))
-      Sync.removerVarios(chavesDe(true));
+    const n = chavesDe(true).length;
+    if (!n) { UI.aviso('Não há questões nem moções na fila.'); return; }
+    UI.dialogo({ tipo: 'info', titulo: `Remover ${n} ${n === 1 ? 'questão ou moção' : 'questões e moções'}?`,
+                 texto: 'Todos esses pedidos saem da fila, inclusive se for a vez de um deles. Os oradores continuam.',
+                 botao: 'Remover', secundario: 'Cancelar' })
+      .then(ok => ok && Sync.removerVarios(chavesDe(true)).catch(falhaDaMesa));
   });
 
   /* ---------------------------------------------------------
@@ -216,6 +232,6 @@
   Sync.iniciar().then(s => {
     s.aoMudar(desenhar);
     s.aoStatus(UI.monitorarConexao($('#avisoConexao')));
-  });
+  }).catch(UI.semConexaoNaAbertura);
 
 })();

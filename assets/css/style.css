@@ -460,6 +460,19 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207
 
 /* ============================ avisos ============================ */
 
+/* janela de aviso (UI.dialogo): ícone, título, explicação e botão */
+.dialogo{ text-align:center; max-width:440px; }
+.dialogo .sheet__desc{ margin-bottom:20px; }
+.dialogo__icone{
+  width:48px; height:48px; margin:6px auto 12px; border-radius:50%;
+  display:grid; place-items:center; flex:none;
+  font-family:'Oswald',sans-serif; font-weight:600; font-size:24px; line-height:1;
+}
+.dialogo--erro .dialogo__icone{ background:rgba(221,106,86,.16); border:1.5px solid rgba(221,106,86,.55); color:#ffb9ac; }
+.dialogo--info .dialogo__icone{ background:rgba(133,207,254,.14); border:1.5px solid rgba(133,207,254,.5); color:var(--ladi-ceu); font-style:italic; }
+/* por cima de qualquer outra folha que já esteja aberta */
+#dialogo{ z-index:60; }
+
 .toast{
   position:fixed; left:50%; bottom:26px; transform:translate(-50%,16px);
   z-index:80; max-width:min(440px,90vw);
