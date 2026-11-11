@@ -197,6 +197,19 @@
 
   $('#btnPainel').addEventListener('click', () => location.href = UI.href('painel/'));
 
+  /* Ao voltar da tela seguinte, o celular não recarrega esta página: restaura
+     a página congelada como ela estava — com o botão travado em "Verificando…"
+     e a senha ainda no campo. Destrava e limpa a senha, que num celular
+     emprestado ficaria à vista de quem pegasse o aparelho depois. */
+  window.addEventListener('pageshow', e => {
+    if (!e.persisted) return;
+    const btn = $('#btnEntrar');
+    btn.disabled = false; btn.textContent = 'Entrar';
+    $('#senha').value = '';
+    $('#senha').type = 'password';
+    $('#verSenha').setAttribute('aria-label', 'Mostrar senha');
+  });
+
   /* se a delegação já entrou nesta aba, deixa o campo pronto */
   const anterior = UI.sessao.ler();
   if (anterior) {
