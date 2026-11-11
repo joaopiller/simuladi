@@ -16,7 +16,7 @@ da UFF e da UNIRIO.
 |---|---|
 | `/` | Entrada: a delegação escolhe o país e digita a senha |
 | `/pedido/` | Pede questão ou moção, entra na lista de oradores e acompanha a própria posição |
-| `/painel/` | Projeção: quem está com a palavra e a fila, exibida em duas listas — oradores, e questões e moções |
+| `/painel/` | Projeção: quem está com a palavra e a fila, exibida em duas listas — oradores, e questões e moções. No modo mesa: remover pedidos, encerrar falas, fechar, encerrar e reabrir a lista de oradores |
 | `/senhas/` | Utilitário para gerar as senhas das delegações em hash |
 
 A fila sincroniza em tempo real entre todos os aparelhos. A mesa diretora libera controles

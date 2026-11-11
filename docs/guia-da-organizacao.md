@@ -79,7 +79,7 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
              ".read": true,
              "$pedido": {
                ".write": "!data.exists() || !newData.exists()",
-               ".validate": "newData.hasChildren(['delegacao', 'ordem'])",
+               ".validate": "newData.hasChildren(['delegacao', 'ordem']) && root.child('salas').child($sala).child('estado').child('lista').val() !== 'encerrada' && (root.child('salas').child($sala).child('estado').child('lista').val() !== 'fechada' || newData.hasChild('categoria'))",
                "delegacao": {
                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60"
                },
@@ -116,6 +116,20 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
              "$outro": {
                ".validate": false
              }
+           },
+           "estado": {
+             ".read": true,
+             ".write": true,
+             ".validate": "newData.hasChildren(['lista', 'desde'])",
+             "lista": {
+               ".validate": "newData.val() === 'aberta' || newData.val() === 'fechada' || newData.val() === 'encerrada'"
+             },
+             "desde": {
+               ".validate": "newData.val() === now"
+             },
+             "$outro": {
+               ".validate": false
+             }
            }
          }
        }
@@ -130,7 +144,9 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
      horário antigo e furar a fila;
    - os campos têm tipo e tamanho limitados, e nada é gravado fora da fila;
    - ninguém tira a palavra de quem está falando: ela só pode ser reservada
-     quando fica livre, e só para quem está na fila.
+     quando fica livre, e só para quem está na fila;
+   - com a lista de oradores fechada o servidor recusa novos oradores, e com ela
+     encerrada recusa qualquer pedido novo — mesmo vindo de fora do site.
 
 4. Vá em **Configurações do projeto → Seus apps → Web (`</>`)**, registre um app
    e copie o objeto `firebaseConfig`.
@@ -313,9 +329,27 @@ do banco.
   inscrição fica na fila. A mesa remove pelo **×**, no modo mesa.
 - **Recarregar a página também tira o pedido da fila** — é o mesmo que fechar o
   navegador. A delegação precisa pedir de novo.
+- **Onde ficam os botões da lista.** *Fechar lista* e *Encerrar lista* ficam sempre no
+  rodapé do modo mesa, para a mesa poder agir mesmo quando a moção foi feita de viva
+  voz ou a delegação saiu da fila. Quando quem está com a palavra apresenta a *Moção
+  para Fechamento* ou a *Moção para Encerramento da Lista de Oradores*, o botão
+  correspondente também aparece no cartão, ao lado de *Encerrar fala*, como atalho. A
+  moção é reconhecida pelo texto, então ajustes de redação no `config.js` não a
+  quebram. Toda ação pede confirmação.
+- **Fechar a lista de oradores**: ninguém novo
+  entra como orador; quem já está inscrito continua e fala normalmente; questões e
+  moções seguem liberadas. O telão mostra o selo *fechada* e o celular troca a
+  inscrição de orador por um aviso.
+- **Encerrar a lista de oradores**: quem está com a palavra termina a fala; os
+  oradores que esperavam saem da fila e são avisados; nenhum pedido novo é aceito, de
+  nenhum tipo. Questões e moções que já estavam na fila continuam nela — a mesa tira
+  as que quiser pelo **×**.
+- **Reabrir a lista** (*Reabrir lista*, no rodapé do modo mesa, visível enquanto a lista
+  está fechada ou encerrada): tudo volta a ser liberado. Quem saiu da fila no
+  encerramento não volta sozinho: precisa pedir de novo.
 - Cada delegação aparece **uma vez só** na fila inteira. Um pedido novo substitui o
   anterior e vai para o fim da fila.
 - A mesa diretora, após liberar o *Modo mesa* com a senha definida em `config.js`,
-  pode remover qualquer pedido pelo **×**, ou usar *Limpar oradores* e *Limpar
-  questões*, que removem só os pedidos daquele tipo — incluindo quem está com a
-  palavra, se for do tipo limpo.
+  pode remover qualquer pedido pelo **×** e encerrar a fala de quem está com a
+  palavra por *Encerrar fala*. Não há botão para esvaziar a fila de uma vez: tirar
+  todos os oradores é o encerramento da lista, que preserva quem está falando.

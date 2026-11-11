@@ -38,6 +38,9 @@
     // ou "Moção solicitada", montado a partir do título da categoria no config,
     // e o tema aparece logo abaixo do país, menor.
     const pedeTema = primeiro && primeiro.categoria;
+    // a mesa só aplica o fechamento/encerramento quando a moção correspondente
+    // está sendo apresentada: o botão aparece no cartão, ao lado de "Encerrar fala"
+    const acaoLista = primeiro && primeiro.categoria ? mocaoDeLista(primeiro.opcao) : null;
     const kicker = pedeTema ? `${UI.esc(primeiro.titulo)} solicitada` : 'Orador com a palavra';
 
     $('#agora').innerHTML = primeiro
@@ -50,6 +53,7 @@
            <div class="now__base">
              <p class="now__timer" id="cron">${UI.cronometro(Sync.falandoDesde ?? desde)}</p>
              <button class="now__x" type="button" data-remover="${UI.esc(primeiro.key)}">Encerrar fala</button>
+             ${acaoLista ? `<button class="now__acao" type="button" data-lista="${acaoLista}">${acaoLista === 'fechada' ? 'Fechar lista de oradores' : 'Encerrar lista de oradores'}</button>` : ''}
            </div>
          </div>`
       : `<div class="now now--empty">
@@ -106,8 +110,7 @@
   function ligarMesa() {
     mesa = true;
     document.body.classList.add('mesa-on');
-    $('#btnLimpar').hidden = false;
-    $('#btnLimparPedidos').hidden = false;
+    aplicarLista();
     $('#btnMesa').textContent = 'Sair da mesa';
     UI.fechar(sheet);
     UI.aviso('Modo mesa liberado.');
@@ -118,8 +121,7 @@
   function desligarMesa() {
     mesa = false;
     document.body.classList.remove('mesa-on');
-    $('#btnLimpar').hidden = true;
-    $('#btnLimparPedidos').hidden = true;
+    aplicarLista();
     $('#btnMesa').textContent = 'Modo mesa';
     UI.aviso('Modo mesa encerrado.');
   }
@@ -164,26 +166,76 @@
     Sync.remover(alvo.dataset.remover).catch(falhaDaMesa).finally(() => { alvo.disabled = false; });
   });
 
-  // Cada botão limpa só o seu tipo. Se quem está com a palavra for desse
-  // tipo, sai também — e a palavra passa ao próximo da fila.
-  const chavesDe = ehPedido => Sync.fila.filter(e => !!e.categoria === ehPedido).map(e => e.key);
+  /* ---------------------------------------------------------
+     situação da lista de oradores
+     --------------------------------------------------------- */
+  // reconhece a moção pelo texto, sem depender de maiúsculas e acentos,
+  // para continuar funcionando se a redação mudar no config.js
+  const normal = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function mocaoDeLista(opcao) {
+    const t = normal(opcao);
+    if (!t.includes('lista de oradores')) return null;
+    if (t.includes('encerramento')) return 'encerrada';
+    if (t.includes('fechamento')) return 'fechada';
+    return null;
+  }
+  // o telão mostra a situação para todos; os botões só aparecem para a mesa
+  function aplicarLista() {
+    const l = Sync.lista;
+    const chip = $('#chipLista');
+    chip.hidden = l === 'aberta';
+    chip.textContent = l === 'encerrada' ? 'encerrada' : 'fechada';
+    chip.classList.toggle('chip-lista--encerrada', l === 'encerrada');
+    // rodapé: sempre à mão, mesmo sem a moção no sistema (feita de viva voz,
+    // delegação que saiu da fila, decisão da própria mesa)
+    $('#btnFecharLista').hidden   = !mesa || l !== 'aberta';
+    $('#btnEncerrarLista').hidden = !mesa || l === 'encerrada';
+    $('#btnReabrirLista').hidden  = !mesa || l === 'aberta';
+    // o botão do cartão some se a lista já estiver nesse estado (ou mais restrita)
+    $$('[data-lista]').forEach(b => {
+      b.hidden = b.dataset.lista === 'fechada' ? l !== 'aberta' : l === 'encerrada';
+    });
+  }
 
-  $('#btnLimpar').addEventListener('click', () => {
-    const n = chavesDe(false).length;
-    if (!n) { UI.aviso('Não há oradores na fila.'); return; }
-    UI.dialogo({ tipo: 'info', titulo: `Remover ${n} ${n === 1 ? 'orador' : 'oradores'}?`,
-                 texto: 'Todos os oradores saem da fila, inclusive quem estiver com a palavra. As questões e moções continuam.',
-                 botao: 'Remover', secundario: 'Cancelar' })
-      .then(ok => ok && Sync.removerVarios(chavesDe(false)).catch(falhaDaMesa));
+  const confirmar = (titulo, texto, botao) =>
+    UI.dialogo({ tipo: 'info', titulo, texto, botao, secundario: 'Cancelar' });
+
+  async function fecharLista() {
+    if (!await confirmar('Fechar a lista de oradores?',
+      'Ninguém novo entra como orador. Quem já está inscrito continua e fala normalmente. Questões e moções seguem liberadas.',
+      'Fechar lista')) return;
+    Sync.definirLista('fechada').then(() => UI.aviso('Lista de oradores fechada.')).catch(falhaDaMesa);
+  }
+
+  async function encerrarLista() {
+    // quem está com a palavra termina a fala, mesmo sendo orador
+    const esperando = () => Sync.fila.slice(1).filter(e => !e.categoria).map(e => e.key);
+    const n = esperando().length;
+    if (!await confirmar('Encerrar a lista de oradores?',
+      `${n ? `${n} ${n === 1 ? 'orador que espera sai' : 'oradores que esperam saem'} da fila. ` : ''}Quem está com a palavra termina a fala. Ninguém mais consegue fazer pedidos até a lista ser reaberta.`,
+      'Encerrar lista')) return;
+    try {
+      await Sync.definirLista('encerrada');      // primeiro bloqueia, depois esvazia
+      await Sync.removerVarios(esperando());
+      UI.aviso('Lista de oradores encerrada.');
+    } catch (e) { falhaDaMesa(e); }
+  }
+
+  $('#btnFecharLista').addEventListener('click', fecharLista);
+  $('#btnEncerrarLista').addEventListener('click', encerrarLista);
+
+  // atalho no cartão, quando a moção de fechamento ou encerramento está na vez
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-lista]');
+    if (!b || !mesa) return;
+    if (b.dataset.lista === 'fechada') fecharLista(); else encerrarLista();
   });
 
-  $('#btnLimparPedidos').addEventListener('click', () => {
-    const n = chavesDe(true).length;
-    if (!n) { UI.aviso('Não há questões nem moções na fila.'); return; }
-    UI.dialogo({ tipo: 'info', titulo: `Remover ${n} ${n === 1 ? 'questão ou moção' : 'questões e moções'}?`,
-                 texto: 'Todos esses pedidos saem da fila, inclusive se for a vez de um deles. Os oradores continuam.',
-                 botao: 'Remover', secundario: 'Cancelar' })
-      .then(ok => ok && Sync.removerVarios(chavesDe(true)).catch(falhaDaMesa));
+  $('#btnReabrirLista').addEventListener('click', async () => {
+    if (!await confirmar('Reabrir a lista de oradores?',
+      'Os pedidos voltam a ser liberados. Quem saiu da fila no encerramento precisa pedir de novo.',
+      'Reabrir lista')) return;
+    Sync.definirLista('aberta').then(() => UI.aviso('Lista de oradores reaberta.')).catch(falhaDaMesa);
   });
 
   /* ---------------------------------------------------------
@@ -241,7 +293,7 @@
      início
      --------------------------------------------------------- */
   Sync.iniciar().then(s => {
-    s.aoMudar(desenhar);
+    s.aoMudar(fila => { desenhar(fila); aplicarLista(); });
     s.aoStatus(UI.monitorarConexao($('#avisoConexao')));
   }).catch(UI.semConexaoNaAbertura);
 

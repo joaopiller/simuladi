@@ -20,6 +20,12 @@
    reserva com uma transação: vários aparelhos podem tentar ao mesmo tempo,
    só um consegue. A projeção só separa a exibição em duas listas.
 
+   Situação da lista de oradores (nó "estado", campo "lista"):
+     aberta    — todos os pedidos liberados (também quando o nó não existe)
+     fechada   — sem novos oradores; questões e moções continuam
+     encerrada — nenhum pedido novo; os oradores que esperavam saíram
+   As regras do banco aplicam o mesmo bloqueio no servidor.
+
    Dois modos, mesma interface:
      • local    -> localStorage + BroadcastChannel (mesmo aparelho)
      • firebase -> Realtime Database (aparelhos diferentes)
@@ -35,6 +41,7 @@ const Sync = (() => {
   let fila      = [];     // já organizada: quem fala, questões/moções, oradores
   let bruta     = [];     // como veio do banco, por ordem de chegada
   let palavra   = null;   // { key, desde }: quem está com a palavra e desde quando
+  let lista     = 'aberta';  // situação da lista de oradores
   let difServidor = 0;    // relógio do servidor - relógio deste aparelho
   let ouvintes  = [];
   let statusCbs = [];
@@ -48,12 +55,18 @@ const Sync = (() => {
        offline      — sem conexão no momento do pedido
        tempo        — o servidor não respondeu a tempo
        indisponivel — o Firebase nem chegou a carregar
-       permissao    — as regras do banco recusaram a gravação */
+       permissao    — as regras do banco recusaram a gravação
+       lista        — a lista de oradores está fechada ou encerrada */
   class ErroSync extends Error {
     constructor(codigo, msg) { super(msg || codigo); this.codigo = codigo; }
   }
-  const traduzir = e => e instanceof ErroSync ? e
-    : new ErroSync(String(e && e.message || e).includes('PERMISSION_DENIED') ? 'permissao' : 'desconhecido', e && e.message);
+  const traduzir = e => {
+    if (e instanceof ErroSync) return e;
+    const negado = String(e && e.message || e).includes('PERMISSION_DENIED');
+    // a mesa fechou a lista no instante do pedido: o servidor recusa pela regra da lista
+    if (negado && lista !== 'aberta') return new ErroSync('lista', e.message);
+    return new ErroSync(negado ? 'permissao' : 'desconhecido', e && e.message);
+  };
   const prazo = (promessa, ms, codigo = 'tempo') => Promise.race([
     promessa, new Promise((_, nao) => setTimeout(() => nao(new ErroSync(codigo)), ms))
   ]);
@@ -64,6 +77,9 @@ const Sync = (() => {
   let marcarPronto, falharPronto;
   const pronto = new Promise((ok, nao) => { marcarPronto = ok; falharPronto = nao; });
   pronto.catch(() => {});
+
+  /* o que a situação da lista permite: fechada barra oradores, encerrada barra tudo */
+  const pedidoPermitido = item => lista === 'aberta' || (lista === 'fechada' && !!item.categoria);
 
   const porChegada = (a, b) => (a.ordem || 0) - (b.ordem || 0) || (a.key < b.key ? -1 : 1);
 
@@ -92,6 +108,7 @@ const Sync = (() => {
 
   const K_FILA = `simuladi:${SALA}:fila`;
   const K_PALAVRA = `simuladi:${SALA}:palavra`;
+  const K_ESTADO = `simuladi:${SALA}:estado`;
   const canal = ('BroadcastChannel' in window) ? new BroadcastChannel(`simuladi:${SALA}`) : null;
 
   const ler = chave => { try { return JSON.parse(localStorage.getItem(chave) || 'null'); } catch (e) { return null; } };
@@ -112,13 +129,14 @@ const Sync = (() => {
     }
     bruta = vivos;
     palavra = ler(K_PALAVRA);
+    lista = (ler(K_ESTADO) || {}).lista || 'aberta';
     recalcular();
   }
 
   const localAPI = {
     iniciar() {
       if (canal) canal.onmessage = recarregarLocal;
-      window.addEventListener('storage', e => { if (e.key === K_FILA || e.key === K_PALAVRA) recarregarLocal(); });
+      window.addEventListener('storage', e => { if (e.key === K_FILA || e.key === K_PALAVRA || e.key === K_ESTADO) recarregarLocal(); });
       setInterval(recarregarLocal, 3000);
       recarregarLocal();
       status(true, 'Modo local');
@@ -126,6 +144,7 @@ const Sync = (() => {
     },
 
     entrar(item) {
+      if (!pedidoPermitido(item)) return Promise.reject(new ErroSync('lista'));
       clearInterval(pulso);                       // encerra o sinal de vida anterior
       const registro = { ...item, key: 'l' + Date.now() + Math.random().toString(36).slice(2, 7),
                          ordem: Date.now(), pulso: Date.now() };
@@ -151,6 +170,12 @@ const Sync = (() => {
 
     remover(key) { gravarFila((ler(K_FILA) || []).filter(e => e.key !== key)); return Promise.resolve(); },
     reconectar() { recarregarLocal(); },
+    definirLista(valor) {
+      localStorage.setItem(K_ESTADO, JSON.stringify({ lista: valor, desde: Date.now() }));
+      if (canal) canal.postMessage('att');
+      recarregarLocal();
+      return Promise.resolve();
+    },
     garantirPalavra() {
       const primeiro = fila[0];
       if (!primeiro || (palavra && palavra.key === primeiro.key)) return;
@@ -178,7 +203,7 @@ const Sync = (() => {
     }))), ms, 'indisponivel');
   }
 
-  let refFila = null, refPalavra = null;
+  let refFila = null, refPalavra = null, refEstado = null;
 
   const fbAPI = {
     async iniciar() {
@@ -189,6 +214,7 @@ const Sync = (() => {
       const db = firebase.database();
       refFila = db.ref(`salas/${SALA}/fila`);
       refPalavra = db.ref(`salas/${SALA}/palavra`);
+      refEstado = db.ref(`salas/${SALA}/estado`);
       db.ref('.info/serverTimeOffset').on('value', s => { difServidor = s.val() || 0; });
 
       db.ref('.info/connected').on('value', s => {
@@ -202,6 +228,9 @@ const Sync = (() => {
 
       refPalavra.on('value', snap => { palavra = snap.val(); recalcular(); primeiraPalavra(); },
                     () => primeiraPalavra());   // regras antigas sem "palavra": segue sem
+      // sem o nó (ou com regras antigas que não o leem), a lista está aberta
+      refEstado.on('value', snap => { lista = (snap.val() || {}).lista || 'aberta'; recalcular(); },
+                   () => { lista = 'aberta'; });
 
       refFila.on('value', snap => {
         const arr = [];
@@ -245,6 +274,7 @@ const Sync = (() => {
 
     async entrar(item) {
       if (!online) throw new ErroSync('offline');
+      if (!pedidoPermitido(item)) throw new ErroSync('lista');
       const ref = refFila.push();
       minhaRef = ref; minhaKey = ref.key;
       /* NÃO registramos onDisconnect aqui, de propósito.
@@ -294,6 +324,10 @@ const Sync = (() => {
     },
 
     remover(key) { return prazo(refFila.child(key).remove(), 8000).catch(e => { throw traduzir(e); }); },
+    definirLista(valor) {
+      return prazo(refEstado.set({ lista: valor, desde: firebase.database.ServerValue.TIMESTAMP }), 8000)
+        .catch(e => { throw traduzir(e); });
+    },
     /* um update com null em cada chave apaga todas numa única gravação */
     removerVarios(keys) {
       if (!keys.length) return Promise.resolve();
@@ -311,6 +345,8 @@ const Sync = (() => {
     get modo()     { return modo; },
     get online()   { return online; },
     get fila()     { return fila.slice(); },
+    get lista()    { return lista; },
+    pedidoPermitido(item) { return pedidoPermitido(item); },
     /* quando quem está falando pegou a palavra, no relógio deste aparelho */
     get falandoDesde() {
       if (!fila[0] || !palavra || palavra.key !== fila[0].key || !palavra.desde) return null;
@@ -374,6 +410,7 @@ const Sync = (() => {
     async sair()              { await pronto; return api.sair(); },
     async remover(key)        { await pronto; return api.remover(key); },
     async removerVarios(keys) { await pronto; return api.removerVarios(keys); },
+    async definirLista(valor) { await pronto; return api.definirLista(valor); },
 
     posicao(key) { return fila.findIndex(e => e.key === key) + 1; }
   };

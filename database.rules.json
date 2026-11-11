@@ -6,7 +6,7 @@
           ".read": true,
           "$pedido": {
             ".write": "!data.exists() || !newData.exists()",
-            ".validate": "newData.hasChildren(['delegacao', 'ordem'])",
+            ".validate": "newData.hasChildren(['delegacao', 'ordem']) && root.child('salas').child($sala).child('estado').child('lista').val() !== 'encerrada' && (root.child('salas').child($sala).child('estado').child('lista').val() !== 'fechada' || newData.hasChild('categoria'))",
             "delegacao": {
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60"
             },
@@ -36,6 +36,20 @@
           ".validate": "newData.hasChildren(['key', 'desde']) && root.child('salas').child($sala).child('fila').child(newData.child('key').val()).exists()",
           "key": {
             ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64"
+          },
+          "desde": {
+            ".validate": "newData.val() === now"
+          },
+          "$outro": {
+            ".validate": false
+          }
+        },
+        "estado": {
+          ".read": true,
+          ".write": true,
+          ".validate": "newData.hasChildren(['lista', 'desde'])",
+          "lista": {
+            ".validate": "newData.val() === 'aberta' || newData.val() === 'fechada' || newData.val() === 'encerrada'"
           },
           "desde": {
             ".validate": "newData.val() === now"

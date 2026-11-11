@@ -60,6 +60,40 @@
   }));
 
   /* ---------------------------------------------------------
+     situação da lista de oradores
+     --------------------------------------------------------- */
+  const AVISOS_LISTA = {
+    fechada:   ['A lista de oradores está fechada',
+                'Não é possível se inscrever como orador. Questões e moções continuam liberadas.'],
+    encerrada: ['A lista de oradores foi encerrada',
+                'Não é possível fazer novos pedidos agora. Aguarde a mesa diretora.'],
+  };
+
+  function aplicarLista() {
+    const l = Sync.lista;
+    const aviso = AVISOS_LISTA[l];
+    $('#avisoLista').hidden = !aviso;
+    if (aviso) { $('#avisoListaTit').textContent = aviso[0]; $('#avisoListaTxt').textContent = aviso[1]; }
+    $('#btnSemPedido').hidden = l !== 'aberta';
+    $('#divisor').hidden      = l !== 'aberta';   // sem o botão de orador, o "ou" não faz sentido
+    const semPedidos = l === 'encerrada';
+    $('#categorias').hidden   = semPedidos;
+    $('#blocoEnviar').hidden  = semPedidos;
+    $('#pergunta').hidden     = semPedidos;
+
+    // a lista mudou com a confirmação aberta: o pedido em andamento pode não valer mais
+    if (sheet.classList.contains('is-open') && !Sync.pedidoPermitido(selecao || {})) {
+      UI.fechar(sheet);
+      avisarLista();
+    }
+  }
+
+  function avisarLista() {
+    const [titulo, texto] = AVISOS_LISTA[Sync.lista] || AVISOS_LISTA.fechada;
+    UI.dialogo({ tipo: 'info', titulo, texto });
+  }
+
+  /* ---------------------------------------------------------
      confirmação
      --------------------------------------------------------- */
   const sheet = $('#sheetConf');
@@ -100,6 +134,7 @@
     try {
       await Sync.quandoPronto();
       if (!Sync.online) throw { codigo: 'offline' };   // avisa já, sem esperar prazos
+      if (!Sync.pedidoPermitido(selecao || {})) throw { codigo: 'lista' };
 
       // Um país aparece uma vez só na fila inteira, seja como orador, questão
       // ou moção. Se sobrou um pedido antigo desta delegação (outro aparelho,
@@ -131,8 +166,9 @@
         UI.dialogo(UI.mensagemDeErro({ codigo: 'tempo' }, 'Seu pedido não apareceu na fila.'));
       }, 10000);
     } catch (e) {
-      console.error(e);
       UI.fechar(sheet);
+      if (e && e.codigo === 'lista') { avisarLista(); return; }
+      console.error(e);
       UI.dialogo(UI.mensagemDeErro(e));
     } finally {
       btn.disabled = false; btn.textContent = 'Confirmar';
@@ -147,7 +183,7 @@
     vFila.hidden = true; vEscolha.hidden = false;
     minhaKey = null; selecao = null; eraMinhaVez = false;
     document.title = `SimuLADI | ${delegacao.nome}`;
-    assinatura = null; vistoNaFila = false; naFrenteAntes = null;
+    assinatura = null; vistoNaFila = false; naFrenteAntes = null; ultimoEu = null;
     $$('.opt').forEach(o => o.setAttribute('aria-pressed', 'false'));
     $$('.acc').forEach(a => { a.classList.remove('is-open'); $('[data-toggle]', a).setAttribute('aria-expanded', 'false'); });
     $('#btnEnviar').disabled = true;
@@ -190,6 +226,7 @@
   let vistoNaFila = false;
   let alertaPendente = false;
   let naFrenteAntes = null;
+  let ultimoEu = null;      // o próprio pedido, como foi visto pela última vez
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !alertaPendente) return;
@@ -206,7 +243,13 @@
       // ainda não voltou do servidor: não é sumiço, é espera
       if (!vistoNaFila) return;
       Sync.sair().catch(() => {});
+      const eraOrador = ultimoEu && !ultimoEu.categoria;
       mostrarEscolha();
+      if (eraOrador && Sync.lista === 'encerrada') {
+        UI.dialogo({ tipo: 'info', titulo: 'A lista de oradores foi encerrada',
+                     texto: 'A mesa diretora encerrou a lista de oradores, e os oradores que ainda esperavam saíram da fila.' });
+        return;
+      }
       // se a delegação continua na fila, o pedido foi substituído por outro aparelho
       UI.dialogo(fila.some(e => e.delegacao === delegacao.nome)
         ? { tipo: 'info', titulo: 'Pedido feito em outro aparelho',
@@ -216,6 +259,7 @@
       return;
     }
     vistoNaFila = true;
+    ultimoEu = eu;
 
     // Dois aparelhos da mesma delegação podem confirmar no mesmo instante,
     // sem um ver o pedido do outro a tempo, e o país ficaria duas vezes na
@@ -283,7 +327,7 @@
      início
      --------------------------------------------------------- */
   Sync.iniciar().then(s => {
-    s.aoMudar(desenhar);
+    s.aoMudar(fila => { aplicarLista(); desenhar(fila); });
     s.aoStatus(UI.monitorarConexao($('#avisoConexao')));
   }).catch(UI.semConexaoNaAbertura);
 

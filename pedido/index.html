@@ -14,7 +14,7 @@
 <meta property="og:title" content="SimuLADI | Pedido de fala">
 <meta property="og:description" content="Fila de oradores da Simulação da ONU organizada pelas Ligas Acadêmicas de Direito Internacional da UFF e da UNIRIO.">
 <meta property="og:url" content="https://simuladi.com.br/pedido/">
-<meta property="og:image" content="https://simuladi.com.br/assets/img/compartilhar.png?v=202611111039">
+<meta property="og:image" content="https://simuladi.com.br/assets/img/compartilhar.png?v=202611111129">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="200">
 <meta property="og:image:height" content="200">
@@ -27,11 +27,11 @@
 <link rel="preconnect" href="https://simuladi-default-rtdb.firebaseio.com">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
-<link rel="icon" type="image/png" href="../assets/img/favicon.png?v=202611111039">
-<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png?v=202611111039">
-<link rel="stylesheet" href="../assets/css/style.css?v=202611111039">
-<script src="../assets/js/config.js?v=202611111039"></script>
-<script src="../assets/js/ui.js?v=202611111039"></script>
+<link rel="icon" type="image/png" href="../assets/img/favicon.png?v=202611111129">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png?v=202611111129">
+<link rel="stylesheet" href="../assets/css/style.css?v=202611111129">
+<script src="../assets/js/config.js?v=202611111129"></script>
+<script src="../assets/js/ui.js?v=202611111129"></script>
 </head>
 <body data-raiz="../">
 <div class="bg"></div>
@@ -56,16 +56,22 @@
     <!-- ============ ETAPA 1: escolher o pedido ============ -->
     <section id="viewEscolha" class="view">
       <h2 class="h-hello">Bem-vindo, <b id="oiDelegacao">—</b>!</h2>
-      <p class="h-ask">O que deseja solicitar?</p>
+      <p class="h-ask" id="pergunta">O que deseja solicitar?</p>
+
+      <!-- aparece quando a mesa fecha ou encerra a lista de oradores -->
+      <div class="aviso-lista" id="avisoLista" role="status" hidden>
+        <p class="aviso-lista__tit" id="avisoListaTit"></p>
+        <p class="aviso-lista__txt" id="avisoListaTxt"></p>
+      </div>
 
       <!-- o pedido mais comum vem primeiro e em destaque -->
       <button class="btn btn--primary" id="btnSemPedido">Inscrição na Lista de Oradores</button>
 
-      <p class="divisor">ou peça a palavra para</p>
+      <p class="divisor" id="divisor">ou peça a palavra para</p>
 
       <div id="categorias"></div>
 
-      <div class="stack">
+      <div class="stack" id="blocoEnviar">
         <button class="btn btn--ghost" id="btnEnviar" disabled>Enviar pedido</button>
       </div>
       <button class="linkbtn" id="btnTrocar">Trocar de delegação</button>
@@ -110,7 +116,7 @@
   </div>
 </div>
 
-<script src="../assets/js/sync.js?v=202611111039"></script>
-<script src="../assets/js/pedido.js?v=202611111039"></script>
+<script src="../assets/js/sync.js?v=202611111129"></script>
+<script src="../assets/js/pedido.js?v=202611111129"></script>
 </body>
 </html>

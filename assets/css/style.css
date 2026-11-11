@@ -291,6 +291,14 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207
 
 .stack>*+*{ margin-top:10px; }
 .acoes{ margin-top:22px; }
+/* aviso de lista de oradores fechada ou encerrada, na tela de escolha */
+.aviso-lista{
+  margin:0 0 18px; padding:16px 18px; border-radius:var(--r-soft); text-align:center;
+  background:rgba(133,207,254,.10); border:1px solid rgba(133,207,254,.38);
+}
+.aviso-lista__tit{ margin:0 0 4px; font-family:'Oswald',sans-serif; font-weight:600; font-size:18px; color:var(--ladi-ceu); }
+.aviso-lista__txt{ margin:0; font-size:14.5px; line-height:1.45; color:rgba(255,255,255,.82); }
+
 /* separador "ou ..." entre a inscrição de orador e as questões e moções */
 .divisor{
   display:flex; align-items:center; gap:12px; margin:24px 0 14px;
@@ -673,6 +681,16 @@ body.painel{ overflow:hidden; }
 .now__x:hover{ background:rgba(221,106,86,.26); }
 .now__x:focus-visible{ outline:2px solid var(--foco); outline-offset:2px; }
 body.mesa-on .now__x{ display:block; }
+/* aplicar a moção de fechamento/encerramento: só para a mesa, só durante a moção */
+.now__acao{
+  display:none; flex:none;
+  padding:10px 20px; border-radius:var(--r-pill);
+  background:rgba(133,207,254,.16); border:1px solid rgba(133,207,254,.5);
+  color:var(--ladi-ceu); font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+}
+.now__acao:hover{ background:rgba(133,207,254,.26); }
+.now__acao:focus-visible{ outline:2px solid var(--foco); outline-offset:2px; }
+body.mesa-on .now__acao:not([hidden]){ display:block; }
 
 /* Barras de rolagem escondidas nas áreas do painel: numa tela de projeção elas
    ficavam por cima do conteúdo. A rolagem continua funcionando normalmente na
@@ -725,6 +743,14 @@ body.mesa-on .now__x{ display:block; }
   color:#ffb9ac; font-size:13px; line-height:1; cursor:pointer;
 }
 body.mesa-on .pedido__x{ display:block; }
+
+/* --- situação da lista de oradores, ao lado do título no telão --- */
+.chip-lista{
+  display:inline-block; margin-left:10px; padding:3px 10px; border-radius:var(--r-pill);
+  font-size:.86em; letter-spacing:.12em; vertical-align:1px;
+  color:#ffd9a8; background:rgba(240,170,90,.14); border:1px solid rgba(240,170,90,.45);
+}
+.chip-lista--encerrada{ color:#ffc3b7; background:rgba(221,106,86,.16); border-color:rgba(221,106,86,.5); }
 
 /* --- o próximo a falar, em qualquer das duas listas --- */
 .fila__item.is-proximo,
