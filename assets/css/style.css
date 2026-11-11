@@ -373,7 +373,7 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207
   -webkit-background-clip:text; background-clip:text; color:transparent;
   margin:0;
 }
-.wait__label{ font-size:13px; letter-spacing:.13em; text-transform:uppercase; color:rgba(133,207,254,.75); margin:2px 0 14px; font-weight:600; }
+.wait__label{ font-size:13px; letter-spacing:.13em; text-transform:uppercase; color:rgba(133,207,254,.75); margin:12px 0 14px; font-weight:600; }
 .wait__title{ font-family:'Oswald',sans-serif; font-weight:500; font-size:23px; margin:0 0 6px; }
 .wait__what{ font-size:15px; color:rgba(255,255,255,.75); margin:0; }
 /* quem está falando: dá à espera uma noção de que a fila anda */
