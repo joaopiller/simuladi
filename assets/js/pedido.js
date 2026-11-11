@@ -68,12 +68,12 @@
     $('#confFlag').textContent = UI.bandeira(delegacao.bandeira);
     if (selecao) {
       $('#confTitulo').textContent = 'Confirmar pedido de fala';
-      $('#confDesc').textContent   = `Você entra na fila e, quando chegar a sua vez, terá a palavra para a ${selecao.titulo.toLowerCase()}.`;
+      $('#confDesc').textContent   = 'Questões e moções passam à frente dos oradores. Você fala logo depois de quem estiver com a palavra e das questões e moções pedidas antes da sua.';
       $('#confTipo').textContent   = selecao.titulo;
       $('#confOpcao').textContent  = selecao.opcao;
     } else {
       $('#confTitulo').textContent = 'Inscrição na Lista de Oradores';
-      $('#confDesc').textContent   = 'Você entra na fila para discursar como orador.';
+      $('#confDesc').textContent   = 'Você entra na fila de oradores. Questões e moções pedidas depois podem passar à sua frente.';
       $('#confTipo').textContent   = delegacao.nome;
       $('#confOpcao').textContent  = 'Inscrição na Lista de Oradores';
     }
@@ -147,7 +147,7 @@
     vFila.hidden = true; vEscolha.hidden = false;
     minhaKey = null; selecao = null; eraMinhaVez = false;
     document.title = `SimuLADI | ${delegacao.nome}`;
-    assinatura = null; vistoNaFila = false;
+    assinatura = null; vistoNaFila = false; naFrenteAntes = null;
     $$('.opt').forEach(o => o.setAttribute('aria-pressed', 'false'));
     $$('.acc').forEach(a => { a.classList.remove('is-open'); $('[data-toggle]', a).setAttribute('aria-expanded', 'false'); });
     $('#btnEnviar').disabled = true;
@@ -189,6 +189,7 @@
   let assinatura  = null;
   let vistoNaFila = false;
   let alertaPendente = false;
+  let naFrenteAntes = null;
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !alertaPendente) return;
@@ -222,7 +223,10 @@
     // aparelhos enxergam os mesmos dados (já confirmados pelo servidor — esta
     // função só roda depois que a gravação foi aceita), os dois chegam à
     // mesma conclusão e só um sai.
-    const substituido = fila.some((e, i) => e.delegacao === delegacao.nome && i > fila.indexOf(eu));
+    // compara pela CHEGADA: com questões e moções furando a fila, a posição
+    // não diz mais qual pedido é o mais recente
+    const maisNovo = e => (e.ordem || 0) > (eu.ordem || 0) || (e.ordem === eu.ordem && e.key > eu.key);
+    const substituido = fila.some(e => e.delegacao === delegacao.nome && e.key !== eu.key && maisNovo(e));
     if (substituido) {
       const minha = minhaKey;
       mostrarEscolha();
@@ -242,6 +246,10 @@
 
     const naFrente = fila.indexOf(eu);
     const minhaVez = naFrente === 0;
+    // o número de quem espera pode subir: avisa o motivo em vez de deixar a pessoa confusa
+    if (naFrenteAntes !== null && naFrente > naFrenteAntes && !minhaVez)
+      UI.aviso(naFrente - naFrenteAntes === 1 ? 'Uma questão ou moção passou à sua frente.' : 'Questões ou moções passaram à sua frente.');
+    naFrenteAntes = naFrente;
 
     $('#cartaoEstado').innerHTML = minhaVez
       ? `<div class="turn">

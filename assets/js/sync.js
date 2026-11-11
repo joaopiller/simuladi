@@ -8,8 +8,17 @@
    • questão — categoria "questao", com o tema em "opcao"
    • moção   — categoria "mocao", com o tema em "opcao"
 
-   Quem está em primeiro tem a palavra, seja qual for o tipo. A tela de
-   projeção só separa a exibição em duas listas; a ordem é uma só.
+   Ordem da fila (função organizar):
+     1. quem está com a palavra, que nunca é interrompido;
+     2. as questões e moções, por ordem de chegada — elas furam a fila;
+     3. os oradores, por ordem de chegada.
+
+   "Quem está com a palavra" fica registrado no nó "palavra" ({ key, desde }).
+   Sem esse registro, uma questão que chegasse durante a fala de um orador
+   viraria a primeira da fila e o cortaria. Quando a palavra fica livre (a
+   pessoa terminou, saiu ou a mesa encerrou), o primeiro da ordem acima a
+   reserva com uma transação: vários aparelhos podem tentar ao mesmo tempo,
+   só um consegue. A projeção só separa a exibição em duas listas.
 
    Dois modos, mesma interface:
      • local    -> localStorage + BroadcastChannel (mesmo aparelho)
@@ -23,7 +32,10 @@ const Sync = (() => {
   const PULSO = 4000;    // modo local: intervalo do sinal de vida
 
   let modo      = 'local';
-  let fila      = [];
+  let fila      = [];     // já organizada: quem fala, questões/moções, oradores
+  let bruta     = [];     // como veio do banco, por ordem de chegada
+  let palavra   = null;   // { key, desde }: quem está com a palavra e desde quando
+  let difServidor = 0;    // relógio do servidor - relógio deste aparelho
   let ouvintes  = [];
   let statusCbs = [];
   let online    = false;  // só vira true quando o servidor confirma a conexão
@@ -53,12 +65,33 @@ const Sync = (() => {
   const pronto = new Promise((ok, nao) => { marcarPronto = ok; falharPronto = nao; });
   pronto.catch(() => {});
 
+  const porChegada = (a, b) => (a.ordem || 0) - (b.ordem || 0) || (a.key < b.key ? -1 : 1);
+
+  /* A regra da fila. Função pura: todos os aparelhos chegam ao mesmo resultado. */
+  function organizar(entradas, pal) {
+    const chegada = entradas.slice().sort(porChegada);
+    // quem reservou a palavra continua com ela; se ninguém reservou (ou quem
+    // reservou já saiu), a vez é da primeira questão/moção, senão do 1º orador
+    const falando = (pal && chegada.find(e => e.key === pal.key))
+                 || chegada.find(e => e.categoria) || chegada[0];
+    if (!falando) return [];
+    const resto = chegada.filter(e => e !== falando);
+    return [falando, ...resto.filter(e => e.categoria), ...resto.filter(e => !e.categoria)];
+  }
+
+  function recalcular() {
+    fila = organizar(bruta, palavra);
+    aviseFila();
+    api.garantirPalavra?.();
+  }
+
   const aviseFila = () => ouvintes.forEach(fn => { try { fn(fila.slice()); } catch (e) { console.error(e); } });
   const status    = (ok, txt) => { online = ok; statusCbs.forEach(fn => fn(ok, txt)); };
 
   /* ============================ MODO LOCAL ============================ */
 
   const K_FILA = `simuladi:${SALA}:fila`;
+  const K_PALAVRA = `simuladi:${SALA}:palavra`;
   const canal = ('BroadcastChannel' in window) ? new BroadcastChannel(`simuladi:${SALA}`) : null;
 
   const ler = chave => { try { return JSON.parse(localStorage.getItem(chave) || 'null'); } catch (e) { return null; } };
@@ -77,14 +110,15 @@ const Sync = (() => {
       localStorage.setItem(K_FILA, JSON.stringify(vivos));
       if (canal) canal.postMessage('att');
     }
-    fila = vivos.sort((a, b) => a.ordem - b.ordem);
-    aviseFila();
+    bruta = vivos;
+    palavra = ler(K_PALAVRA);
+    recalcular();
   }
 
   const localAPI = {
     iniciar() {
       if (canal) canal.onmessage = recarregarLocal;
-      window.addEventListener('storage', e => { if (e.key === K_FILA) recarregarLocal(); });
+      window.addEventListener('storage', e => { if (e.key === K_FILA || e.key === K_PALAVRA) recarregarLocal(); });
       setInterval(recarregarLocal, 3000);
       recarregarLocal();
       status(true, 'Modo local');
@@ -117,6 +151,13 @@ const Sync = (() => {
 
     remover(key) { gravarFila((ler(K_FILA) || []).filter(e => e.key !== key)); return Promise.resolve(); },
     reconectar() { recarregarLocal(); },
+    garantirPalavra() {
+      const primeiro = fila[0];
+      if (!primeiro || (palavra && palavra.key === primeiro.key)) return;
+      palavra = { key: primeiro.key, desde: Date.now() };
+      localStorage.setItem(K_PALAVRA, JSON.stringify(palavra));
+      if (canal) canal.postMessage('att');
+    },
     removerVarios(keys) {
       const fora = new Set(keys);
       gravarFila((ler(K_FILA) || []).filter(e => !fora.has(e.key)));
@@ -137,7 +178,7 @@ const Sync = (() => {
     }))), ms, 'indisponivel');
   }
 
-  let refFila = null;
+  let refFila = null, refPalavra = null;
 
   const fbAPI = {
     async iniciar() {
@@ -147,14 +188,20 @@ const Sync = (() => {
       firebase.initializeApp(Config.firebase);
       const db = firebase.database();
       refFila = db.ref(`salas/${SALA}/fila`);
+      refPalavra = db.ref(`salas/${SALA}/palavra`);
+      db.ref('.info/serverTimeOffset').on('value', s => { difServidor = s.val() || 0; });
 
       db.ref('.info/connected').on('value', s => {
         status(!!s.val(), s.val() ? 'Conectado' : 'Reconectando…');
       });
 
       // espera o primeiro retrato da fila: até lá, "fila vazia" seria mentira
-      let primeira;
+      let primeira, primeiraPalavra;
       const chegou = new Promise(ok => { primeira = ok; });
+      const chegouPalavra = new Promise(ok => { primeiraPalavra = ok; });
+
+      refPalavra.on('value', snap => { palavra = snap.val(); recalcular(); primeiraPalavra(); },
+                    () => primeiraPalavra());   // regras antigas sem "palavra": segue sem
 
       refFila.on('value', snap => {
         const arr = [];
@@ -163,15 +210,28 @@ const Sync = (() => {
         // corpo precisa ficar entre chaves, sem retornar valor, senão a fila
         // inteira vira só o primeiro país.
         snap.forEach(filho => { arr.push({ key: filho.key, ...filho.val() }); });
-        // Ordem pelo horário do SERVIDOR, e não pela chave: a chave é gerada
-        // no aparelho e podia ser forjada para passar na frente de todos.
+        // A chegada é medida pelo horário do SERVIDOR, e não pela chave: a
+        // chave é gerada no aparelho e podia ser forjada para furar a fila.
         // As regras do banco exigem ordem === now, então o horário não se falsifica.
-        arr.sort((a, b) => (a.ordem || 0) - (b.ordem || 0) || (a.key < b.key ? -1 : 1));
-        fila = arr;
-        aviseFila();
+        bruta = arr;
+        recalcular();
         primeira();
       });
-      await prazo(chegou, 20000, 'indisponivel');
+      await prazo(Promise.all([chegou, chegouPalavra]), 20000, 'indisponivel');
+    },
+
+    /* Reserva a palavra para o primeiro da fila quando ela fica livre. A
+       transação lê o valor do servidor: se outro aparelho já reservou para
+       alguém que ainda está na fila, desiste. */
+    garantirPalavra() {
+      const primeiro = fila[0];
+      if (!refPalavra || !primeiro || !online) return;
+      if (palavra && palavra.key === primeiro.key) return;
+      const naFila = new Set(bruta.map(e => e.key));
+      refPalavra.transaction(atual => {
+        if (atual && naFila.has(atual.key)) return;   // alguém já está com a palavra
+        return { key: primeiro.key, desde: firebase.database.ServerValue.TIMESTAMP };
+      }, null, false).catch(() => {});                   // recusa das regras: outro venceu
     },
 
     /* Uma conexão nova na hora. Usado quando a tela do celular acorda: a
@@ -251,6 +311,11 @@ const Sync = (() => {
     get modo()     { return modo; },
     get online()   { return online; },
     get fila()     { return fila.slice(); },
+    /* quando quem está falando pegou a palavra, no relógio deste aparelho */
+    get falandoDesde() {
+      if (!fila[0] || !palavra || palavra.key !== fila[0].key || !palavra.desde) return null;
+      return palavra.desde - (modo === 'firebase' ? difServidor : 0);
+    },
     get minhaKey() { return minhaKey; },
     get pronto()   { return estaPronto; },
     quandoPronto() { return pronto; },

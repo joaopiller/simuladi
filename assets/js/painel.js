@@ -48,7 +48,7 @@
              ${pedeTema ? `<p class="now__tema">${UI.esc(primeiro.opcao)}</p>` : ''}
            </div>
            <div class="now__base">
-             <p class="now__timer" id="cron">00:00</p>
+             <p class="now__timer" id="cron">${UI.cronometro(Sync.falandoDesde ?? desde)}</p>
              <button class="now__x" type="button" data-remover="${UI.esc(primeiro.key)}">Encerrar fala</button>
            </div>
          </div>`
@@ -90,7 +90,11 @@
       : `<li class="empty">Nenhuma questão ou moção na fila.</li>`;
   }
 
-  setInterval(() => { const c = $('#cron'); if (c) c.textContent = UI.cronometro(desde); }, 1000);
+  // O início da fala vem do servidor: recarregar o painel não zera mais o
+  // cronômetro, e todas as telas mostram o mesmo tempo. Enquanto a reserva da
+  // palavra não chega, conta a partir de quando esta tela viu a troca.
+  const tick = () => { const c = $('#cron'); if (c) c.textContent = UI.cronometro(Sync.falandoDesde ?? desde); };
+  setInterval(tick, 1000);
 
   /* ---------------------------------------------------------
      modo mesa

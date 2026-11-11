@@ -80,13 +80,41 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
              "$pedido": {
                ".write": "!data.exists() || !newData.exists()",
                ".validate": "newData.hasChildren(['delegacao', 'ordem'])",
-               "delegacao": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
-               "bandeira":  { ".validate": "newData.isString() && newData.val().length <= 16" },
-               "categoria": { ".validate": "newData.isString() && newData.val().length <= 30" },
-               "titulo":    { ".validate": "newData.isString() && newData.val().length <= 30" },
-               "opcao":     { ".validate": "newData.isString() && newData.val().length <= 120" },
-               "ordem":     { ".validate": "newData.val() === now" },
-               "$outro":    { ".validate": false }
+               "delegacao": {
+                 ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60"
+               },
+               "bandeira": {
+                 ".validate": "newData.isString() && newData.val().length <= 16"
+               },
+               "categoria": {
+                 ".validate": "newData.isString() && newData.val().length <= 30"
+               },
+               "titulo": {
+                 ".validate": "newData.isString() && newData.val().length <= 30"
+               },
+               "opcao": {
+                 ".validate": "newData.isString() && newData.val().length <= 120"
+               },
+               "ordem": {
+                 ".validate": "newData.val() === now"
+               },
+               "$outro": {
+                 ".validate": false
+               }
+             }
+           },
+           "palavra": {
+             ".read": true,
+             ".write": "!data.exists() || !root.child('salas').child($sala).child('fila').child(data.child('key').val()).exists()",
+             ".validate": "newData.hasChildren(['key', 'desde']) && root.child('salas').child($sala).child('fila').child(newData.child('key').val()).exists()",
+             "key": {
+               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64"
+             },
+             "desde": {
+               ".validate": "newData.val() === now"
+             },
+             "$outro": {
+               ".validate": false
              }
            }
          }
@@ -100,7 +128,9 @@ mais do que suficiente para uma simulação. **Não pede cartão de crédito.**
    - ninguém apaga a fila inteira de uma vez;
    - o horário de cada pedido é o do **servidor**, então não dá para forjar um
      horário antigo e furar a fila;
-   - os campos têm tipo e tamanho limitados, e nada é gravado fora da fila.
+   - os campos têm tipo e tamanho limitados, e nada é gravado fora da fila;
+   - ninguém tira a palavra de quem está falando: ela só pode ser reservada
+     quando fica livre, e só para quem está na fila.
 
 4. Vá em **Configurações do projeto → Seus apps → Web (`</>`)**, registre um app
    e copie o objeto `firebaseConfig`.
@@ -241,9 +271,16 @@ do banco.
 
 - Existe **uma fila só** de pedidos de fala. Cada pedido é de um tipo: **orador**
   (*Inscrição na Lista de Oradores*), **questão** ou **moção**.
-- A ordem é **por chegada**, sem prioridade entre os tipos: quem confirma primeiro
-  fica em primeiro. Quem está em primeiro tem a palavra, seja qual for o tipo — não
-  há orador falando enquanto uma questão ou moção está sendo feita.
+- **Questões e moções furam a fila**, mas **nunca interrompem quem está com a
+  palavra**. A ordem é: quem está falando; depois as questões e moções, por ordem de
+  chegada entre elas; depois os oradores, por ordem de chegada. Só uma pessoa fala por
+  vez — não há orador falando enquanto uma questão ou moção está sendo feita.
+- Quando a palavra fica livre, ela vai para a primeira questão ou moção da fila; se
+  não houver nenhuma, para o primeiro orador.
+- Como questões e moções passam à frente, o número de quem espera como orador pode
+  aumentar. O celular avisa quando isso acontece.
+- O cronômetro conta a partir do horário em que a pessoa pegou a palavra, registrado no
+  servidor: recarregar a tela de projeção não o zera.
 - A tela de projeção **exibe** a fila em duas listas — *Fila de oradores* e *Fila de
   questões e moções* — mas a ordem é uma só. Cada item mostra a **posição global**:
   uma questão em 2º fala antes de um orador em 4º.

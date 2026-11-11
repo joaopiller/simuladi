@@ -39,9 +39,11 @@ extras na tela de projeção com uma senha própria.
   externo é o plano gratuito do Firebase.
 - **Sem build.** O que está no repositório é exatamente o que vai para o ar, o que torna o
   deploy e a depuração triviais.
-- **Uma fila só para todo pedido de fala.** Orador, questão e moção entram na mesma
-  fila, por ordem de chegada, e só uma pessoa fala por vez. A projeção separa a
-  exibição em duas listas, mas cada item mostra a posição global.
+- **Uma fila só para todo pedido de fala, com prioridade.** Orador, questão e moção
+  entram na mesma fila e só uma pessoa fala por vez. Questões e moções passam à frente
+  dos oradores, mas nunca interrompem quem está com a palavra — quem fala fica
+  registrado no nó `palavra`, reservado por transação quando a palavra fica livre. A
+  projeção separa a exibição em duas listas, mas cada item mostra a posição global.
 - **Camada de sincronização plugável.** `sync.js` expõe a mesma interface sobre dois
   adaptadores: `localStorage` (para desenvolver sozinho) e Firebase (para o evento). A
   escolha é automática, pela presença da chave em `config.js`.

@@ -7,13 +7,41 @@
           "$pedido": {
             ".write": "!data.exists() || !newData.exists()",
             ".validate": "newData.hasChildren(['delegacao', 'ordem'])",
-            "delegacao": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
-            "bandeira":  { ".validate": "newData.isString() && newData.val().length <= 16" },
-            "categoria": { ".validate": "newData.isString() && newData.val().length <= 30" },
-            "titulo":    { ".validate": "newData.isString() && newData.val().length <= 30" },
-            "opcao":     { ".validate": "newData.isString() && newData.val().length <= 120" },
-            "ordem":     { ".validate": "newData.val() === now" },
-            "$outro":    { ".validate": false }
+            "delegacao": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60"
+            },
+            "bandeira": {
+              ".validate": "newData.isString() && newData.val().length <= 16"
+            },
+            "categoria": {
+              ".validate": "newData.isString() && newData.val().length <= 30"
+            },
+            "titulo": {
+              ".validate": "newData.isString() && newData.val().length <= 30"
+            },
+            "opcao": {
+              ".validate": "newData.isString() && newData.val().length <= 120"
+            },
+            "ordem": {
+              ".validate": "newData.val() === now"
+            },
+            "$outro": {
+              ".validate": false
+            }
+          }
+        },
+        "palavra": {
+          ".read": true,
+          ".write": "!data.exists() || !root.child('salas').child($sala).child('fila').child(data.child('key').val()).exists()",
+          ".validate": "newData.hasChildren(['key', 'desde']) && root.child('salas').child($sala).child('fila').child(newData.child('key').val()).exists()",
+          "key": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64"
+          },
+          "desde": {
+            ".validate": "newData.val() === now"
+          },
+          "$outro": {
+            ".validate": false
           }
         }
       }
