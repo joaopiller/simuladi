@@ -249,11 +249,12 @@
            <p class="turn__title">Sua vez de falar!</p>
            ${eu.opcao ? `<p class="turn__what">${UI.esc(eu.opcao)}</p>` : ''}
          </div>`
-      : `<div class="wait card">
+      : `<div class="wait card${naFrente === 1 ? ' wait--proximo' : ''}">
            <p class="wait__pos">${naFrente}</p>
            <p class="wait__label">${naFrente === 1 ? 'delegação na sua frente' : 'delegações na sua frente'}</p>
-           <p class="wait__title">Aguarde sua vez de falar</p>
+           <p class="wait__title">${naFrente === 1 ? 'Você é a próxima a falar' : 'Aguarde sua vez de falar'}</p>
            <p class="wait__what">${UI.esc(eu.opcao || 'Inscrição na Lista de Oradores')}</p>
+           <p class="wait__agora">Com a palavra agora: <b>${UI.esc(fila[0].delegacao)}</b></p>
          </div>`;
 
     // quem está falando tem só "Terminei de falar"; quem espera, só "Remover meu pedido"

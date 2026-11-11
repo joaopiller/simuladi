@@ -63,21 +63,26 @@
     const oradores = resto.filter(e => !e.categoria);
     const pedidos  = resto.filter(e => e.categoria);
 
+    // O próximo a falar pode estar em qualquer das duas listas; destacá-lo
+    // poupa a sala de procurar o número 2 nas duas.
+    const proximo = e => e.pos === 2 ? ' is-proximo' : '';
+    const tagProximo = e => e.pos === 2 ? ' <span class="proximo-tag">próximo</span>' : '';
+
     $('#proximos').innerHTML = oradores.length
       ? oradores.map(e => `
-          <li class="fila__item">
+          <li class="fila__item${proximo(e)}">
             <span class="fila__n">${e.pos}</span>
             <span class="flag" style="font-size:20px">${UI.bandeira(e.bandeira)}</span>
-            <span class="fila__nome">${UI.esc(e.delegacao)}</span>
+            <span class="fila__nome">${UI.esc(e.delegacao)}${tagProximo(e)}</span>
             <button class="fila__x" data-remover="${UI.esc(e.key)}" title="Remover da fila" aria-label="Remover ${UI.esc(e.delegacao)}">×</button>
           </li>`).join('')
       : `<li class="empty">Nenhum orador aguardando.</li>`;
 
     $('#listaPedidos').innerHTML = pedidos.length
       ? pedidos.map(e => `
-          <li class="pedido">
+          <li class="pedido${proximo(e)}">
             <span class="pedido__n">${e.pos}</span>
-            <span class="pedido__pais">${UI.esc(e.delegacao)}</span>
+            <span class="pedido__pais">${UI.esc(e.delegacao)}${tagProximo(e)}</span>
             <span class="pedido__tema">${UI.esc(e.opcao)}</span>
             <button class="pedido__x" data-remover="${UI.esc(e.key)}" title="Remover da fila"
                     aria-label="Remover ${UI.esc(e.delegacao)}">×</button>

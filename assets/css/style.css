@@ -376,6 +376,16 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207
 .wait__label{ font-size:13px; letter-spacing:.13em; text-transform:uppercase; color:rgba(133,207,254,.75); margin:2px 0 14px; font-weight:600; }
 .wait__title{ font-family:'Oswald',sans-serif; font-weight:500; font-size:23px; margin:0 0 6px; }
 .wait__what{ font-size:15px; color:rgba(255,255,255,.75); margin:0; }
+/* quem está falando: dá à espera uma noção de que a fila anda */
+.wait__agora{
+  margin:16px -22px -26px; padding:12px 22px;
+  border-top:1px solid var(--hair); border-radius:0 0 var(--r-card) var(--r-card);
+  font-size:13.5px; color:rgba(255,255,255,.62);
+}
+.wait__agora b{ color:#fff; font-weight:700; }
+/* faltando uma: o cartão muda de tom para a pessoa se preparar */
+.wait--proximo{ border-color:rgba(133,207,254,.55); background:rgba(133,207,254,.10); }
+.wait--proximo .wait__title{ color:var(--ladi-ceu); }
 
 .empty{ text-align:center; color:rgba(255,255,255,.5); font-size:14.5px; font-style:italic; padding:22px 10px; }
 
@@ -426,7 +436,10 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207
 .sheet__grab{ width:42px; height:4px; border-radius:99px; background:rgba(255,255,255,.24); margin:4px auto 12px; flex:none; }
 .sheet__title{ font-family:'Oswald',sans-serif; font-weight:600; font-size:20px; margin:0 0 4px; text-align:center; }
 .sheet__desc{ font-size:14.5px; color:rgba(255,255,255,.7); margin:0 0 16px; text-align:center; line-height:1.5; }
-.sheet__list{ overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -4px; padding:2px 4px 4px; flex:1; }
+.sheet__list{ overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -4px; padding:2px 4px 4px; flex:1;
+  /* a lista desvanece nas pontas em vez de ser cortada na reta: mostra que rola */
+  -webkit-mask-image:linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 16px), transparent 100%);
+          mask-image:linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 16px), transparent 100%); }
 .sheet__actions{ display:flex; gap:10px; padding-top:6px; flex:none; }
 .sheet__actions .btn{ flex:1; }
 
@@ -446,6 +459,8 @@ input.pill:focus{ outline:none; box-shadow:var(--sh-lift),0 0 0 3px rgba(133,207
   text-align:left; cursor:pointer;
 }
 .pickitem:hover{ background:rgba(255,255,255,.1); }
+/* bandeiras são emojis de larguras diferentes: a coluna fixa alinha os nomes */
+.pickitem .flag{ width:28px; display:grid; place-items:center; }
 .pickitem:focus-visible{ outline:2px solid var(--foco); outline-offset:1px; }
 .pickitem[aria-selected="true"]{ border-color:rgba(200,224,239,.5); background:rgba(200,224,239,.13); }
 
@@ -636,10 +651,11 @@ body.painel{ overflow:hidden; }
   background:rgba(255,255,255,.1); border:1px solid var(--hair);
   text-wrap:balance;
 }
+/* o tempo de fala é o que a mesa mais consulta: grande e legível de longe */
 .now__timer{
   margin:0; font-variant-numeric:tabular-nums;
-  font-size:clamp(15px,1.7vw,22px); color:rgba(255,255,255,.6); font-weight:600;
-  letter-spacing:.04em;
+  font-family:'Oswald',sans-serif; font-weight:500;
+  font-size:clamp(22px,2.8vw,40px); color:rgba(255,255,255,.88); letter-spacing:.03em;
 }
 .now--empty{
   border-color:var(--hair); background:var(--veil);
@@ -709,6 +725,17 @@ body.mesa-on .now__x{ display:block; }
   color:#ffb9ac; font-size:13px; line-height:1; cursor:pointer;
 }
 body.mesa-on .pedido__x{ display:block; }
+
+/* --- o próximo a falar, em qualquer das duas listas --- */
+.fila__item.is-proximo,
+.pedido.is-proximo{ border-color:rgba(133,207,254,.6); background:rgba(133,207,254,.13); }
+.is-proximo .fila__n,
+.is-proximo .pedido__n{ background:var(--ladi-ceu); color:var(--ladi-escuro); }
+.proximo-tag{
+  margin-left:8px; vertical-align:2px;
+  font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ladi-ceu);
+}
 
 /* --- fila de países, em faixa embaixo --- */
 .fila{
